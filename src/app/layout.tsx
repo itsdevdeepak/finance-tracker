@@ -1,5 +1,11 @@
+import { Public_Sans } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
+
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Finance Tracker",
@@ -16,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={publicSans.variable}>
       <body>{children}</body>
     </html>
   );

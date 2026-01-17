@@ -1,1 +1,105 @@
 @import "tailwindcss";
+
+:root {
+  --clr-white: hsl(0 0 100);
+  --clr-gray-100: hsl(0 0 95);
+  --clr-gray-300: hsl(0 0 70);
+  --clr-gray-500: hsl(0 0 41);
+  --clr-gray-900: hsl(252 7 13);
+  --clr-beige-100: hsl(30 36 96);
+  --clr-beige-500: hsl(23 6 57);
+
+  --clr-green: hsl(177 52 32);
+  --clr-yellow: hsl(28 73 81);
+  --clr-cyan: hsl(190 52 68);
+  --clr-navy: hsl(248 8 41);
+  --clr-red: hsl(7 58 50);
+  --clr-violet: hsl(259 30 56);
+  --clr-purple: hsl(288 29 62);
+  --clr-turquoise: hsl(180 16 42);
+  --clr-brown: hsl(21 30 44);
+  --clr-magenta: hsl(332 30 44);
+  --clr-blue: hsl(205 48 47);
+  --clr-navy-gray: hsl(214 11 63);
+  --clr-army-green: hsl(83 20 47);
+  --clr-gold: hsl(47 50 59);
+  --clr-orange: hsl(18 47 52);
+
+  --fs-xl: 2rem;
+  --fs-lg: 1.25rem;
+  --fs-base: 1rem;
+  --fs-sm: 0.875rem;
+  --fs-xs: 0.75rem;
+
+  --line-base: 1.5;
+  --line-sm: 1.2;
+
+  --space-3xl: 2.5rem;
+  --space-2xl: 2rem;
+  --space-xl: 1.5rem;
+  --space-lg: 1.25rem;
+  --space-base: 1rem;
+  --space-sm: 0.75rem;
+  --space-xs: 0.5rem;
+  --space-2xs: 0.25rem;
+
+  --font-primary: var(--font-public-sans);
+}
+
+@theme inline {
+  /* Color */
+  --color-gray-lighter: var(--clr-gray-100);
+  --color-gray-light: var(--clr-gray-300);
+  --color-gray: var(--clr-gray-500);
+  --color-gray-darker: var(--clr-gray-900);
+  --color-beige-lighter: var(--clr-beige-100);
+  --color-beige: var(--clr-beige-500);
+  --color-white: var(--clr-white);
+  --color-black: var(--clr-gray-900);
+
+  --color-green: var(--clr-green);
+  --color-yellow: var(--clr-yellow);
+  --color-cyan: var(--clr-cyan);
+  --color-navy: var(--clr-navy);
+  --color-red: var(--clr-red);
+  --color-violet: var(--clr-violet);
+  --color-purple: var(--clr-purple);
+  --color-turquoise: var(--clr-turquoise);
+  --color-brown: var(--clr-brown);
+  --color-magenta: var(--clr-magenta);
+  --color-blue: var(--clr-blue);
+  --color-navy-gray: var(--clr-navy-gray);
+  --color-army-green: var(--clr-army-green);
+  --color-gold: var(--clr-gold);
+  --color-orange: var(--clr-orange);
+
+  /* Font */
+  --font-sans: var(--font-primary);
+
+  --text-xl: var(--fs-xl);
+  --text-xl--line-height: var(--line-sm);
+  --text-lg: var(--fs-lg);
+  --text-lg--line-height: var(--line-sm);
+  --text-base: var(--fs-base);
+  --text-base--line-height: var(--line-base);
+  --text-sm: var(--fs-sm);
+  --text-sm--line-height: var(--line-base);
+  --text-xs: var(--fs-xs);
+  --text-xs--line-height: var(--line-base);
+
+  /* Space */
+  --spacing-3xl: var(--space-3xl);
+  --spacing-2xl: var(--space-2xl);
+  --spacing-xl: var(--space-xl);
+  --spacing-lg: var(--space-lg);
+  --spacing-base: var(--space-base);
+  --spacing-sm: var(--space-sm);
+  --spacing-xs: var(--space-xs);
+  --spacing-2xs: var(--space-2xs);
+}
+
+@layer base {
+  body {
+    @apply font-sans text-base bg-white text-black;
+  }
+}
