@@ -1,3 +1,5 @@
+import { Sidebar, SkipToMain, TabNavigation } from "@/components/navigation";
+
 export default function Layout({
   children,
 }: Readonly<{
@@ -5,7 +7,12 @@ export default function Layout({
 }>) {
   return (
     <>
-      <main id="main">{children}</main>
+      <SkipToMain />
+      <div className="with-sidebar max-lg:*:first:hidden">
+        <Sidebar />
+        <main id="main">{children}</main>
+      </div>
+      <TabNavigation visibility="mobile-and-tablet" />
     </>
   );
 }
