@@ -8,9 +8,14 @@ export default function Layout({
   return (
     <>
       <SkipToMain />
-      <div className="with-sidebar max-lg:*:first:hidden">
+      <div className="with-sidebar">
         <Sidebar />
-        <main id="main">{children}</main>
+        <main
+          id="main"
+          className="px-base py-xl sm:px-3xl sm:py-2xl max-lg:pb-23!"
+        >
+          {children}
+        </main>
       </div>
       <TabNavigation visibility="mobile-and-tablet" />
     </>

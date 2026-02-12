@@ -1,0 +1,93 @@
+.dropdown {
+  position: relative;
+
+  /* drop button */
+  [role="combobox"] {
+    display: inline-flex;
+    align-items: center;
+    background: var(--color-white);
+
+    gap: var(--spacing-base);
+    padding-block: var(--spacing-sm);
+    padding-inline: var(--spacing-lg);
+
+    border: 1px solid var(--color-gray-light);
+    border-radius: var(--spacing-xs);
+
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-green);
+      outline-offset: 2px;
+    }
+
+    &:focus-within,
+    &:hover {
+      border-color: var(--color-gray);
+    }
+
+    &[aria-disabled="true"] {
+      cursor: auto;
+      opacity: 50%;
+    }
+
+    @media (width >= 700px) {
+      &::after {
+        content: url("/images/icon-caret-down.svg");
+        display: inherit;
+      }
+
+      &[aria-expanded="true"]::after {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  /* drop menu */
+  [role="listbox"] {
+    position: absolute;
+    inset-block-start: calc(100% + var(--spacing-base));
+    inset-inline-end: 0;
+
+    /* menu size is same or larger that its container  */
+    min-width: 100%;
+
+    border-radius: var(--spacing-xs);
+    text-wrap: nowrap;
+    background: var(--color-white);
+    box-shadow: 0 4px 24px 0 rgb(0 0 0 / 0.25);
+
+    z-index: 10;
+
+    /* menu items and mobile only label */
+    > * {
+      padding-block: var(--spacing-sm);
+      padding-inline: var(--spacing-lg);
+    }
+
+    > :not(:last-child) {
+      border-bottom: 1px solid var(--color-gray-lighter);
+    }
+
+    &[data-expanded="false"] {
+      display: none;
+    }
+  }
+
+  /* drop menu item */
+  [role="option"] {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-gray-lighter);
+    }
+
+    &[aria-selected="true"] {
+      font-weight: bold;
+    }
+
+    &[data-focused="true"] {
+      outline: 2px solid var(--color-green);
+    }
+  }
+}
