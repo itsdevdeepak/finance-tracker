@@ -1,7 +1,7 @@
-import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { categorySelectOptions, SortingSelectOptions } from "./constants";
 import { CategoryOption, SortingOption, Transaction } from "./types";
 import { decodeSearchParam } from "@/lib/utils/url";
+import { sortData } from "@/lib/utils/data-processing";
 
 export function isValidSortOption(option: string): option is SortingOption {
   return SortingSelectOptions.includes(option as SortingOption);
@@ -12,22 +12,22 @@ export function sortTransactions(data: Transaction[], sortingOption: string) {
 
   switch (sortingOption) {
     case "Latest": {
-      return [...data].sort((a, b) => b.date.getTime() - a.date.getTime());
+      return sortData(data, "date", "asc");
     }
     case "Oldest": {
-      return [...data].sort((a, b) => a.date.getTime() - b.date.getTime());
+      return sortData(data, "date", "desc");
     }
     case "Highest": {
-      return [...data].sort((a, b) => b.amount - a.amount);
+      return sortData(data, "amount", "desc");
     }
     case "Lowest": {
-      return [...data].sort((a, b) => a.amount - b.amount);
+      return sortData(data, "amount", "asc");
     }
     case "A to Z": {
-      return [...data].sort((a, b) => a.name.localeCompare(b.name));
+      return sortData(data, "name", "asc");
     }
     case "Z to A": {
-      return [...data].sort((a, b) => b.name.localeCompare(a.name));
+      return sortData(data, "name", "desc");
     }
     default:
       return data;
@@ -47,44 +47,12 @@ export function filterTransaction(data: Transaction[], category: string) {
   return [...data].filter((transaction) => transaction.category === category);
 }
 
-export function searchTransaction(data: Transaction[], query: string) {
-  if (query.length < 1) return data;
-
-  return [...data].filter((transaction) => {
-    if (
-      transaction.name.toLowerCase().includes(query.toLowerCase()) ||
-      transaction.category.toLowerCase().includes(query.toLowerCase()) ||
-      formatDate(transaction.date)
-        .toLowerCase()
-        .includes(query.toLowerCase()) ||
-      formatCurrency(transaction.amount)
-        .toLowerCase()
-        .includes(query.toLowerCase())
-    ) {
-      return true;
-    }
-
-    return false;
-  });
-}
-
-export function limitTransactions(
-  data: Transaction[],
-  currentPage: number,
-  limit: number,
-) {
-  const offset = (currentPage - 1) * limit;
-  return [...data].slice(offset, offset + limit);
-}
-
 function sanitizeString(value: string | undefined, fallback = "") {
   if (!value) return fallback;
 
   const decoded = decodeSearchParam(value);
-  return decoded
-    .trim()
-    .replace(/[<>\"']/g, "")
-    .substring(0, 67);
+
+  return decoded.replace(/[<>\"']/g, "").substring(0, 67);
 }
 
 function sanitizeNumber(value: string | undefined, fallback = 0) {

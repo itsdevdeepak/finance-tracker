@@ -1,13 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { createQueryString } from "@/lib/utils/url";
-import { Transaction, URLParam } from "../types";
+import { Transaction } from "../types";
 import DataControls from "./DataControls";
 import TransactionList from "./TransactionList";
 import TransactionTable from "./TransactionsTable";
 import Pagination from "@/components/ui/Pagination";
+
+import useUpdateParam from "@/hooks/useUpdateParam";
 
 export default function Transactions({
   transactions,
@@ -20,27 +19,11 @@ export default function Transactions({
     totalItems: number;
   };
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-
-  function updateUrl(params: URLParam | URLParam[], replace = false) {
-    startTransition(() => {
-      const navigate = replace ? router.replace : router.push;
-
-      const queryString = createQueryString(
-        searchParams,
-        Array.isArray(params) ? params : [params],
-      );
-
-      navigate(`${pathname}?${queryString}`, { scroll: false });
-    });
-  }
+  const { isPending, updateParam } = useUpdateParam();
 
   return (
     <div className="bg-white p-lg md:p-2xl rounded-xl">
-      <DataControls updateUrl={updateUrl} inTransition={isPending} />
+      <DataControls updateParam={updateParam} inTransition={isPending} />
       <TransactionTable
         className={`max-sm:hidden ${isPending ? "opacity-75 animate-pulse" : ""}`}
         transactions={transactions}
@@ -53,7 +36,7 @@ export default function Transactions({
         {...meta}
         inTransition={isPending}
         updatePage={(page: number) =>
-          updateUrl({ name: "page", value: page.toString() })
+          updateParam({ name: "page", value: page.toString() })
         }
       />
     </div>

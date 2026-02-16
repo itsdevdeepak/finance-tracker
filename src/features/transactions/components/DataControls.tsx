@@ -1,17 +1,17 @@
 import { useSearchParams } from "next/navigation";
-import { URLParam } from "../types";
 import { decodeSearchParam } from "@/lib/utils/url";
 import { categorySelectOptions, SortingSelectOptions } from "../constants";
 import Search from "@/components/ui/form/Search";
 import DropDown from "@/components/ui/form/DropDown";
 import IconFilterMobile from "@/components/icons/IconFilterMobile";
 import IconSortMobile from "@/components/icons/IconSortMobile";
+import { URLParam } from "@/types";
 
 export default function DataControls({
-  updateUrl,
+  updateParam,
   inTransition = false,
 }: {
-  updateUrl: (param: URLParam | URLParam[], replace?: boolean) => void;
+  updateParam: (param: URLParam | URLParam[], replace?: boolean) => void;
   inTransition?: boolean;
 }) {
   const searchParams = useSearchParams();
@@ -26,7 +26,7 @@ export default function DataControls({
         placeholder="Search Transaction"
         inTransition={inTransition}
         updateQuery={(value) =>
-          updateUrl(
+          updateParam(
             [
               { name: "query", value },
               { name: "page", value: "1" },
@@ -41,7 +41,7 @@ export default function DataControls({
           defaultValue={decodeSearchParam(searchParams.get("sort") ?? "")}
           options={SortingSelectOptions}
           updateValue={(value) =>
-            updateUrl(
+            updateParam(
               [
                 { name: "sort", value },
                 { name: "page", value: "1" },
@@ -57,7 +57,7 @@ export default function DataControls({
           defaultValue={decodeSearchParam(searchParams.get("category") ?? "")}
           options={categorySelectOptions}
           updateValue={(value) =>
-            updateUrl(
+            updateParam(
               [
                 { name: "category", value },
                 { name: "page", value: "1" },

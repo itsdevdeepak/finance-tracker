@@ -7,12 +7,8 @@ import {
   Transaction,
   TransactionRaw,
 } from "./types";
-import {
-  filterTransaction,
-  limitTransactions,
-  searchTransaction,
-  sortTransactions,
-} from "./utils";
+import { filterTransaction, sortTransactions } from "./utils";
+import { limitDataPerPage, searchData } from "@/lib/utils/data-processing";
 
 async function getMockData(): Promise<TransactionRaw[]> {
   const filePath = path.join(process.cwd(), "src/lib/data/data.json");
@@ -26,8 +22,8 @@ export async function getTransactions({
   query,
   sort,
   category,
-  page,
-  limit,
+  page = 1,
+  limit = 10,
 }: GetTransactionsParams): Promise<GetTransactionsResponse> {
   try {
     await new Promise((res) => {
@@ -41,14 +37,26 @@ export async function getTransactions({
       date: new Date(transaction.date),
     }));
 
-    transactions = searchTransaction(transactions, query);
-    transactions = filterTransaction(transactions, category);
+    if (query) {
+      transactions = searchData(transactions, query, [
+        "name",
+        "category",
+        "amount",
+        "date",
+      ]);
+    }
+
+    if (category) {
+      transactions = filterTransaction(transactions, category);
+    }
 
     const totalItems = transactions.length;
     const totalPages = Math.ceil(totalItems / limit);
+    if (sort) {
+      transactions = sortTransactions(transactions, sort);
+    }
 
-    transactions = sortTransactions(transactions, sort);
-    transactions = limitTransactions(transactions, page, limit);
+    transactions = limitDataPerPage(transactions, page, limit);
 
     return {
       data: transactions,

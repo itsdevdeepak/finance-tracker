@@ -23,11 +23,11 @@ export type SortingOption = (typeof SortingSelectOptions)[number];
 export type CategoryOption = (typeof categorySelectOptions)[number];
 
 export type GetTransactionsParams = {
-  query: string;
-  sort: string;
-  category: string;
-  page: number;
-  limit: number;
+  query?: string;
+  sort?: string;
+  category?: string;
+  page?: number;
+  limit?: number;
 };
 
 export type GetTransactionsResponse = {
@@ -40,5 +40,3 @@ export type GetTransactionsResponse = {
 
   error?: string;
 };
-
-export type URLParam = { name: string; value: string };
