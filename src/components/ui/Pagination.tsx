@@ -39,6 +39,8 @@ export default function Pagination({
 }) {
   const pages = getPaginationPages(currentPage, totalPages, 7);
 
+  if (totalPages < 2) return;
+
   return (
     <div className={styles.pagination}>
       <button
