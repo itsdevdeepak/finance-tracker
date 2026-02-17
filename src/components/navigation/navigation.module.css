@@ -9,6 +9,7 @@
   font-weight: bold;
   background: var(--color-green);
   color: var(--color-white);
+  z-index: 999;
 
   transform: translateY(-300px);
 
