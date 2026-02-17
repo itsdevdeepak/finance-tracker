@@ -63,10 +63,7 @@ export async function getRecurringBills({
 
     const totalItems = recurringBills.length;
     const totalPages = Math.ceil(totalItems / limit);
-    const totalAmount = recurringBills.reduce(
-      (acc, bill) => acc + bill.amount,
-      0,
-    );
+
     const summary = recurringBills.reduce(
       (acc, bill) => {
         const status = getBillStatus(bill);
