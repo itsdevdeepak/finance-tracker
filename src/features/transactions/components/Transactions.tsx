@@ -1,6 +1,7 @@
 "use client";
 
-import { Transaction } from "../types";
+import { use } from "react";
+import { GetTransactionsResponse, Transaction } from "../types";
 import DataControls from "./DataControls";
 import TransactionList from "./TransactionList";
 import TransactionTable from "./TransactionsTable";
@@ -9,17 +10,14 @@ import Pagination from "@/components/ui/Pagination";
 import useUpdateParam from "@/hooks/useUpdateParam";
 
 export default function Transactions({
-  transactions,
-  meta,
+  getTransactionsResponse,
 }: {
-  transactions: Transaction[];
-  meta: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
+  getTransactionsResponse: Promise<GetTransactionsResponse>;
 }) {
+  const { data: transactions, meta, error } = use(getTransactionsResponse);
   const { isPending, updateParam } = useUpdateParam();
+
+  if (error || meta === undefined) return <h2>error</h2>;
 
   return (
     <div className="bg-white p-lg md:p-2xl rounded-xl">

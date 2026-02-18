@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import RecurringBills from "@/features/recurring-bills/components/RecurringBills";
+import RecurringBillsSkeleton from "@/features/recurring-bills/components/RecurringBillsSkeleton";
 import { getRecurringBills } from "@/features/recurring-bills/service";
 import { sanitizeSearchParams } from "@/features/transactions/utils";
 
@@ -9,7 +11,9 @@ export default async function Page(props: PageProps<"/recurring-bills">) {
   return (
     <section className="flow-2xl">
       <h1 className="text-xl font-bold">Recurring Bills</h1>
-      <RecurringBills getRecurringBillResponse={recurringBills} />
+      <Suspense fallback={<RecurringBillsSkeleton />}>
+        <RecurringBills getRecurringBillResponse={recurringBills} />
+      </Suspense>
     </section>
   );
 }
