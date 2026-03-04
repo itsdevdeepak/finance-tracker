@@ -18,8 +18,8 @@ function RecurringCards({ summary }: { summary: RecurringBillsSummary }) {
   return (
     <>
       <div className="h-fit flex gap-xl grow flex-wrap *:basis-83 *:grow *:shrink">
-        <div className="max-sm:flex items-center gap-lg bg-gray-darker text-white rounded-xl p-xl">
-          <IconRecurringBills className="w-10 h-10 sm:mb-2xl" />
+        <div className="flex sm:flex-col max-sm:items-center gap-2xl bg-gray-darker text-white rounded-xl p-xl justify-between">
+          <IconRecurringBills className="w-10 h-10" />
           <div className="flow-xs">
             <p className="text-sm">Total Bills</p>
             <p className="text-2xl font-bold">

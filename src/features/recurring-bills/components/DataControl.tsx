@@ -1,9 +1,9 @@
 import { useSearchParams } from "next/navigation";
 import { SORT_OPTIONS } from "../constants";
 import IconSortMobile from "@/components/icons/IconSortMobile";
-import DropDown from "@/components/ui/form/DropDown";
 import Search from "@/components/ui/form/Search";
 import { URLParam } from "@/types";
+import Dropdown from "@/components/ui/Dropdown";
 
 export default function DataControls({
   updateParam,
@@ -34,7 +34,7 @@ export default function DataControls({
         }
       />
       <div className="flex gap-sm lg:gap-lg">
-        <DropDown
+        <Dropdown
           label="Sort by"
           defaultValue={searchParams.get("sort") ?? ""}
           options={SORT_OPTIONS}

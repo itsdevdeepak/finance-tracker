@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { GetTransactionsResponse, Transaction } from "../types";
+import { GetTransactionsResponse } from "../types";
 import DataControls from "./DataControls";
 import TransactionList from "./TransactionList";
 import TransactionTable from "./TransactionsTable";
