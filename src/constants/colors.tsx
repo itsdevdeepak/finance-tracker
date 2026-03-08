@@ -1,0 +1,17 @@
+export const ColorsByName = {
+  green: "hsl(177 52 32)",
+  yellow: "hsl(28 73 81)",
+  cyan: "hsl(190 52 68)",
+  navy: "hsl(248 8 41)",
+  red: "hsl(7 58 50)",
+  purple: "hsl(288 29 62)",
+  turquoise: "hsl(180 16 42)",
+  brown: "hsl(21 30 44)",
+  magenta: "hsl(332 30 44)",
+  blue: "hsl(205 48 47)",
+  gray: "hsl(214 11 63)",
+  army: "hsl(83 20 47)",
+  violet: "hsl(259 30 56)",
+  gold: "hsl(47 50 59)",
+  orange: "hsl(18 47 52)",
+};

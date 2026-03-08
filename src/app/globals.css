@@ -96,11 +96,15 @@
   --spacing-sm: var(--space-sm);
   --spacing-xs: var(--space-xs);
   --spacing-2xs: var(--space-2xs);
+
+  --shadow: 0 4px 24px 0 rgb(0 0 0 / 0.25);
 }
 
 @layer base {
   button:focus-visible,
-  a:focus-visible {
+  a:focus-visible,
+  input[type="text"]:focus-visible,
+  input[type="number"]:focus-visible {
     outline: 2px solid var(--clr-green);
     outline-offset: 2px;
   }
@@ -110,7 +114,38 @@
   }
 }
 
+@layer components {
+  .button {
+    padding-block: var(--space-base);
+    padding-inline: var(--space-lg);
+    border-radius: var(--space-xs);
+    cursor: pointer;
+    font-weight: bold;
+    font-size: var(--fs-sm);
+    color: var(--clr-white);
+    background: var(--color-gray-darker);
+
+    &:not(:disabled):hover {
+      background: var(--color-gray);
+    }
+
+    &:disabled {
+      background-color: var(--color-gray-light);
+    }
+  }
+}
+
 @layer layout {
+  .fluid-grid {
+    --minimum: 20ch;
+
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(var(--minimum), 100%), 1fr)
+    );
+  }
+
   .with-sidebar {
     --layout-gap: var(--space-base);
     display: flex;

@@ -2,6 +2,7 @@
 
 import { CSSProperties } from "react";
 import Select, { type Option } from "./Select";
+import { capitalizedString } from "@/lib/utils/format";
 import styles from "./colorSelect.module.css";
 
 type ColorOption = Option<{ color: string }>;
@@ -9,10 +10,12 @@ type ColorOption = Option<{ color: string }>;
 export default function ColorSelect({
   label,
   name,
+  defaultValue = "",
   options,
 }: {
   label: string;
   name: string;
+  defaultValue?: string;
   options: ColorOption[];
 }) {
   return (
@@ -21,6 +24,7 @@ export default function ColorSelect({
         label={label}
         name={name}
         options={options}
+        defaultValue={defaultValue}
         renderValue={(option) => {
           return <Option option={option} />;
         }}
@@ -39,7 +43,7 @@ function Option({ option }: { option: ColorOption }) {
         style={{ "--dot-color": option.color } as CSSProperties}
         className={`${styles.dot} w-base h-base rounded-full`}
       />
-      {option.value}
+      {capitalizedString(option.value)}
     </div>
   );
 }

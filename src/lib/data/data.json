@@ -402,22 +402,22 @@
     {
       "category": "Entertainment",
       "maximum": 50.0,
-      "theme": "#277C78"
+      "theme": "green"
     },
     {
       "category": "Bills",
       "maximum": 750.0,
-      "theme": "#82C9D7"
+      "theme": "cyan"
     },
     {
       "category": "Dining Out",
       "maximum": 75.0,
-      "theme": "#F2CDAC"
+      "theme": "yellow"
     },
     {
       "category": "Personal Care",
       "maximum": 100.0,
-      "theme": "#626070"
+      "theme": "navy"
     }
   ],
   "pots": [
@@ -425,31 +425,31 @@
       "name": "Savings",
       "target": 2000.0,
       "total": 159.0,
-      "theme": "#277C78"
+      "theme": "green"
     },
     {
       "name": "Concert Ticket",
       "target": 150.0,
       "total": 110.0,
-      "theme": "#626070"
+      "theme": "navy"
     },
     {
       "name": "Gift",
       "target": 150.0,
       "total": 110.0,
-      "theme": "#82C9D7"
+      "theme": "cyan"
     },
     {
       "name": "New Laptop",
       "target": 1000.0,
       "total": 10.0,
-      "theme": "#F2CDAC"
+      "theme": "yellow"
     },
     {
       "name": "Holiday",
       "target": 1440.0,
       "total": 531.0,
-      "theme": "#826CB0"
+      "theme": "purple"
     }
   ]
 }
