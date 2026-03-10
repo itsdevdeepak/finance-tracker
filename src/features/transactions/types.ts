@@ -28,6 +28,8 @@ export type GetTransactionsParams = {
   category?: string;
   page?: number;
   limit?: number;
+  month?: number;
+  year?: number;
 };
 
 export type GetTransactionsResponse = {

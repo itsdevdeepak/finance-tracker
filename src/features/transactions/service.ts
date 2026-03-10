@@ -7,7 +7,11 @@ import {
   Transaction,
   TransactionRaw,
 } from "./types";
-import { filterTransaction, sortTransactions } from "./utils";
+import {
+  filterTransactionWithCategory,
+  filterTransactionWithDate,
+  sortTransactions,
+} from "./utils";
 import { limitDataPerPage, searchData } from "@/lib/utils/data-processing";
 
 async function getMockData(): Promise<TransactionRaw[]> {
@@ -22,8 +26,10 @@ export async function getTransactions({
   query,
   sort,
   category,
+  year,
+  month,
   page = 1,
-  limit = 10,
+  limit,
 }: GetTransactionsParams): Promise<GetTransactionsResponse> {
   try {
     await new Promise((res) => {
@@ -47,16 +53,23 @@ export async function getTransactions({
     }
 
     if (category) {
-      transactions = filterTransaction(transactions, category);
+      transactions = filterTransactionWithCategory(transactions, category);
+    }
+
+    if (year) {
+      transactions = filterTransactionWithDate(transactions, year, month);
     }
 
     const totalItems = transactions.length;
-    const totalPages = Math.ceil(totalItems / limit);
+    const totalPages = limit ? Math.ceil(totalItems / limit) : 1;
+
     if (sort) {
       transactions = sortTransactions(transactions, sort);
     }
 
-    transactions = limitDataPerPage(transactions, page, limit);
+    if (limit !== undefined) {
+      transactions = limitDataPerPage(transactions, page, limit);
+    }
 
     return {
       data: transactions,

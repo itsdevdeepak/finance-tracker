@@ -2,6 +2,7 @@ import { categorySelectOptions, SortingSelectOptions } from "./constants";
 import { CategoryOption, SortingOption, Transaction } from "./types";
 import { decodeSearchParam } from "@/lib/utils/url";
 import { sortData } from "@/lib/utils/data-processing";
+import { formatDate } from "@/lib/utils/format";
 
 export function isValidSortOption(option: string): option is SortingOption {
   return SortingSelectOptions.includes(option as SortingOption);
@@ -40,11 +41,30 @@ export function isValidCategoryOption(
   return categorySelectOptions.includes(option as CategoryOption);
 }
 
-export function filterTransaction(data: Transaction[], category: string) {
+export function filterTransactionWithCategory(
+  data: Transaction[],
+  category: string,
+) {
   if (!isValidCategoryOption(category)) return data;
   if (category === "All Transactions") return data;
 
   return [...data].filter((transaction) => transaction.category === category);
+}
+
+export function filterTransactionWithDate(
+  data: Transaction[],
+  year: number,
+  month?: number,
+) {
+  return [...data].filter((transaction) => {
+    const transactionYear = transaction.date.getFullYear();
+    const transactionMonth = transaction.date.getMonth() + 1;
+
+    if (transactionYear !== year) return false;
+    if (month !== undefined && transactionMonth !== month) return false;
+
+    return true;
+  });
 }
 
 function sanitizeString(value: string | undefined, fallback = "") {
