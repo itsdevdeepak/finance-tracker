@@ -1,0 +1,25 @@
+.donutChart {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: var(--spacing-3xl);
+
+  > * {
+    flex: 1;
+  }
+
+  .chart {
+    padding: var(--spacing-lg);
+  }
+
+  &:first-child {
+    min-height: fit-content;
+    min-width: fit-content;
+  }
+
+  .chartText {
+    text-anchor: middle;
+  }
+}
