@@ -1,4 +1,4 @@
-export default function PotModalSkeletal() {
+export default function DialogSkeletal() {
   return (
     <div
       aria-busy="true"

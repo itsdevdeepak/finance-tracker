@@ -5,10 +5,10 @@ import { Pot } from "../types";
 import { PotSavingFormState } from "../actions";
 import { formatCurrency } from "@/lib/utils/format";
 import { useModal } from "@/components/ui/Modal";
-import ModalCloseButton from "./ModalCloseButton";
 import ProgressBar from "./ProgressBar";
 import TextInput from "@/components/ui/form/TextInput";
 import IconDollar from "@/components/icons/IconDollar";
+import DialogCard from "@/components/ui/DialogCard";
 
 function AmountPreview({
   type,
@@ -106,15 +106,11 @@ export default function SavingForm({
     : "Adding to Pot";
 
   return (
-    <div className="bg-white rounded-xl px-lg py-xl flow-lg max-w-[516px] shadow">
-      <div className="w-full inline-flex items-center justify-between">
-        <h1 className="text-lg md:text-xl font-bold">{heading}</h1>
-        <ModalCloseButton />
-      </div>
-      {state.errors?.other && (
-        <p className="text-red font-bold text-sm">{state.errors?.other}</p>
-      )}
-      <p className="text-gray text-sm">{description}</p>
+    <DialogCard
+      heading={heading}
+      description={description}
+      error={state.errors?.other}
+    >
       <form action={formAction} className="flow-lg">
         <AmountPreview
           type={type}
@@ -139,6 +135,6 @@ export default function SavingForm({
           {isPending ? buttonPendingText : buttonText}
         </button>
       </form>
-    </div>
+    </DialogCard>
   );
 }

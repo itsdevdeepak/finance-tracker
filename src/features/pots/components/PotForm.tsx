@@ -5,10 +5,10 @@ import { Pot } from "../types";
 import { colorOptions } from "../constants";
 import { PotFormState } from "../actions";
 import { useModal } from "@/components/ui/Modal";
-import ModalCloseButton from "./ModalCloseButton";
 import TextInput from "@/components/ui/form/TextInput";
 import ColorSelect from "@/components/ui/form/ColorSelect";
 import IconDollar from "@/components/icons/IconDollar";
+import DialogCard from "@/components/ui/DialogCard";
 
 export default function PotForm({
   heading,
@@ -37,15 +37,11 @@ export default function PotForm({
   }, [state.success, context]);
 
   return (
-    <div className="bg-white rounded-xl px-lg py-xl flow-lg md:min-w-[500px] shadow">
-      <div className="w-full inline-flex items-center justify-between">
-        <h1 className="text-lg md:text-xl font-bold">{heading}</h1>
-        <ModalCloseButton />
-      </div>
-      {state.errors?.other && (
-        <p className="text-red font-bold text-sm">{state.errors?.other}</p>
-      )}
-      <p className="text-gray text-sm max-w-[55ch]">{description}</p>
+    <DialogCard
+      heading={heading}
+      description={description}
+      error={state.errors?.other}
+    >
       <form className="flow-base" action={formAction}>
         <TextInput
           autoFocus={true}
@@ -81,6 +77,6 @@ export default function PotForm({
               : "Add Pot"}
         </button>
       </form>
-    </div>
+    </DialogCard>
   );
 }

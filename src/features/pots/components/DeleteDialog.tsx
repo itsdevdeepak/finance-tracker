@@ -7,7 +7,7 @@ import { useModal } from "@/components/ui/Modal";
 import { DeletePot } from "../constants";
 import { capitalizedString } from "@/lib/utils/format";
 import { DeletePotActionState } from "../actions";
-import ModalCloseButton from "./ModalCloseButton";
+import DialogCard from "@/components/ui/DialogCard";
 
 export default function DeleteDialog({
   action,
@@ -21,15 +21,10 @@ export default function DeleteDialog({
   const context = useModal();
   const [isPending, startTransition] = useTransition();
 
+  const heading = `Delete ‘${capitalizedString(pot.name)}’?`;
+
   return (
-    <div className="bg-white rounded-xl px-lg py-xl flow-lg max-w-[516px] shadow">
-      <div className="w-full inline-flex items-center justify-between">
-        <h1 className="text-lg md:text-xl font-bold">
-          Delete ‘{capitalizedString(pot.name)}’?
-        </h1>
-        <ModalCloseButton />
-      </div>
-      <p className="text-gray text-sm">{DeletePot.description}</p>
+    <DialogCard heading={heading} description={DeletePot.description}>
       {error && (
         <p className="text-red font-bold text-sm text-center">{error}</p>
       )}
@@ -59,6 +54,6 @@ export default function DeleteDialog({
       >
         No, I want to go back
       </button>
-    </div>
+    </DialogCard>
   );
 }

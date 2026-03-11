@@ -1,5 +1,5 @@
+import DialogSkeletal from "@/components/ui/DialogSkeletal";
 import EditPotView from "@/features/pots/components/EditPotView";
-import PotModalSkeletal from "@/features/pots/components/PotModalSkeletal";
 import { Suspense } from "react";
 
 export default async function Page({ params }: PageProps<"/pots/[id]/edit">) {
@@ -7,7 +7,7 @@ export default async function Page({ params }: PageProps<"/pots/[id]/edit">) {
 
   return (
     <section className="flex items-center justify-center min-h-screen">
-      <Suspense fallback={<PotModalSkeletal />}>
+      <Suspense fallback={<DialogSkeletal />}>
         <EditPotView id={id} />
       </Suspense>
     </section>
