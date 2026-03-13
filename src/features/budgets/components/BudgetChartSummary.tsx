@@ -14,7 +14,7 @@ function SummaryItem({ budget }: { budget: Budget }) {
         <span>{budget.category}</span>
       </div>
       <div className="text-base inline-flex items-center gap-xs">
-        <span className="font-black">{formatCurrency(budget.spent)}</span>
+        <span className="font-bold">{formatCurrency(budget.spent)}</span>
         <span className="text-gray text-xs">
           of {formatCurrency(budget.maximum)}
         </span>

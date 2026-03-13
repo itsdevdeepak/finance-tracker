@@ -3,20 +3,21 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-evenly;
-  gap: var(--spacing-3xl);
+  justify-content: center;
+  gap: var(--spacing-xl);
 
   > * {
-    flex: 1;
+    flex-grow: 1;
+    flex-shrink: 1;
   }
 
   .chart {
-    padding: var(--spacing-lg);
-  }
-
-  &:first-child {
-    min-height: fit-content;
-    min-width: fit-content;
+    svg {
+      margin: auto;
+      max-width: inherit;
+      max-height: inherit;
+      aspect-ratio: 1 / 1;
+    }
   }
 
   .chartText {

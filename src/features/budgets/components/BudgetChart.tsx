@@ -15,7 +15,7 @@ export default function BudgetsChart({
       <DonutChart
         heading={"$" + totalSpent}
         subHeading={`of \$${totalLimit} limit`}
-        className="*:first:min-w-[240px] *:first:max-w-[350px]"
+        className="*:first:max-h-[300px]"
         data={data}
         renderCaption={() => renderCaption(budgets)}
       />

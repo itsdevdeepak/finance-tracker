@@ -1,6 +1,8 @@
 import BudgetsView from "@/features/budgets/components/BudgetsView";
+import BudgetViewSkeletal from "@/features/budgets/components/BudgetsViewSkeletal";
 import { getBudgets } from "@/features/budgets/service";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default function Page() {
   const getBudgetsResponse = getBudgets();
@@ -13,7 +15,9 @@ export default function Page() {
           + Add New Budget
         </Link>
       </div>
-      <BudgetsView getBudgetsResponse={getBudgetsResponse} />
+      <Suspense fallback={<BudgetViewSkeletal />}>
+        <BudgetsView getBudgetsResponse={getBudgetsResponse} />
+      </Suspense>
     </section>
   );
 }

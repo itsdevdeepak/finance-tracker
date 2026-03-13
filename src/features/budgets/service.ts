@@ -118,7 +118,7 @@ export async function createBudget({
       year: today.getFullYear(),
       month: today.getMonth() + 1,
     });
-    z;
+
     const spent = transactions.reduce((total, { amount }) => {
       return total + (amount < 0 ? Math.abs(amount) : 0);
     }, 0);
