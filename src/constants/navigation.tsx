@@ -23,8 +23,8 @@ export const navLinks: NavLink[] = [
     Icon: IconNavTransactions,
   },
   {
-    label: "Budget",
-    href: "/budget",
+    label: "Budgets",
+    href: "/budgets",
     Icon: IconNavBudgets,
   },
   {
