@@ -1,3 +1,5 @@
+import { CurrencyCodes } from "@/constants/currency";
+
 export function validateNumber(
   value: unknown,
   options?: { min?: number; max?: number },
@@ -46,4 +48,63 @@ export function validateString(
   }
 
   return sanitizedValue;
+}
+
+export function validateEmail(value: unknown) {
+  const email = validateString(value, { minLength: 5 });
+
+  if (!email) return null;
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) return null;
+
+  return email;
+}
+
+export function validatePassword(
+  value: unknown,
+  options?: {
+    minLength?: number;
+    maxLength?: number;
+    requireUppercase?: boolean;
+    requireLowercase?: boolean;
+    requireNumber?: boolean;
+    requireSpecialChar?: boolean;
+  },
+): string | null {
+  const password = validateString(value, {
+    minLength: options?.minLength,
+    maxLength: options?.maxLength,
+  });
+
+  if (!password) return null;
+
+  if (options) {
+    if (options.requireUppercase && !/[A-Z]/.test(password)) {
+      return null;
+    }
+    if (options.requireLowercase && !/[a-z]/.test(password)) {
+      return null;
+    }
+    if (options.requireNumber && !/[0-9]/.test(password)) {
+      return null;
+    }
+    if (
+      options.requireSpecialChar &&
+      !/[!@#$%^&*(),.?":{}|<>\[\]\\/;'`~_-]/.test(password)
+    ) {
+      return null;
+    }
+  }
+
+  return password;
+}
+
+export function validateCurrencyCode(value: unknown): string | null {
+  const currencyCode = validateString(value, { minLength: 3, maxLength: 3 });
+
+  if (!currencyCode) return null;
+  if (!CurrencyCodes.includes(currencyCode.toUpperCase())) return null;
+
+  return currencyCode.toUpperCase();
 }
