@@ -20,7 +20,7 @@ export default function TextInput({
   label: string;
   name: string;
   placeholder: string;
-  type?: "text" | "number";
+  type?: "text" | "number" | "email" | "password";
   value?: string;
   onChange?: ChangeEventHandler<HTMLInputElement>;
   defaultValue?: string | number;
