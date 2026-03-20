@@ -31,7 +31,11 @@ export default function BudgetForm({
 
   return (
     <>
-      <DialogCard heading={heading} description={description}>
+      <DialogCard
+        heading={heading}
+        description={description}
+        error={state.errors?.other}
+      >
         <form className="flow-base" action={formAction}>
           <Select
             name="category"

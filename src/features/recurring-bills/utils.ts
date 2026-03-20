@@ -1,6 +1,4 @@
-import { sortData } from "@/lib/utils/data-processing";
 import { isValidSortOption } from "../transactions/utils";
-import { RecurringBill } from "./types";
 
 export function formatToMonthlyDate(date: Date | number) {
   try {
@@ -41,45 +39,65 @@ export function formatToMonthlyDate(date: Date | number) {
   }
 }
 
-export function getBillStatus(
-  bill: RecurringBill,
-): "paid" | "upcoming" | "due" {
-  const today = new Date("19 August 2024");
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const upcomingDate = Math.min(endOfMonth.getDate(), today.getDate() + 5);
-  const dueDate = bill.dueDate;
+export function getBillStatus(dueDate: number, lastPaidDate: Date | null,) {
+  const today = new Date();
 
-  if (today.getDate() > dueDate) return "paid";
-  if (upcomingDate >= dueDate && dueDate > today.getDate()) return "due";
-  return "upcoming";
+  if (
+    lastPaidDate &&
+    lastPaidDate.getFullYear() === today.getFullYear() &&
+    lastPaidDate.getMonth() === today.getMonth()
+  ) {
+    return "paid";
+  }
+
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const safeDueDate = Math.min(dueDate > 1 ? dueDate : 1, endOfMonth.getDate());
+  const dueThresholdDate = new Date(today.getFullYear(), today.getMonth(), safeDueDate - 5);
+
+  if (today >= dueThresholdDate) return "due";
+  return "upcoming"
 }
 
-export function sortRecurringBills(
-  data: RecurringBill[],
-  sortingOption: string,
-) {
-  if (!isValidSortOption(sortingOption)) return data;
+
+export function getOrderBy(sortingOption: string): Record<string, "asc" | "desc"> {
+  if (!isValidSortOption(sortingOption)) return {
+    "dueDate": "desc"
+  };
 
   switch (sortingOption) {
     case "Latest": {
-      return sortData(data, "dueDate", "asc");
+      return {
+        "dueDate": "asc"
+      }
     }
     case "Oldest": {
-      return sortData(data, "dueDate", "desc");
+      return {
+        "dueDate": "desc"
+      }
     }
     case "Highest": {
-      return sortData(data, "amount", "desc");
+      return {
+        "amount": "desc"
+      }
     }
     case "Lowest": {
-      return sortData(data, "amount", "asc");
+      return {
+        "amount": "asc"
+      }
     }
     case "A to Z": {
-      return sortData(data, "name", "asc");
+      return {
+        "name": "asc"
+      }
     }
     case "Z to A": {
-      return sortData(data, "name", "desc");
+      return {
+        "name": "desc"
+      }
     }
     default:
-      return data;
+      return {
+        "dueDate": "asc"
+      };
   }
 }

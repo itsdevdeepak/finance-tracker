@@ -25,7 +25,10 @@ export default function RecurringTable({
       }
       data={[
         recurringBills.map((recurring) => {
-          const status = getBillStatus(recurring);
+          const status = getBillStatus(
+            recurring.dueDate,
+            recurring.lastPaidDate,
+          );
 
           return (
             <Table.Row key={recurring.id} data-avatar={recurring.avatar}>

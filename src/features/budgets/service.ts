@@ -1,66 +1,80 @@
-"use cache";
-
-import fs from "fs/promises";
-import path from "path";
-
 import {
   Budget,
   CreateNewBudgetProps,
+  CreateNewBudgetResponse,
   GetBudgetByIdResponse,
   GetBudgetResponse,
-  RawBudget,
   UpdateBudgetByIdProps,
   UpdateBudgetByIdResponse,
 } from "./types";
-import { getTransactions } from "../transactions/service";
-import { Transaction } from "../transactions/types";
-import { cacheLife } from "next/cache";
+import { verifySession } from "@/lib/auth-session";
+import { prisma } from "@/lib/prisma";
+import { getMonthRange } from "@/lib/utils/prisma";
 
-async function getMockData() {
-  const filePath = path.join(process.cwd(), "src/lib/data/data.json");
-  const rawData = await fs.readFile(filePath, "utf-8");
+const omitBudgetProperties = {
+  createdAt: true,
+  updatedAt: true,
+  userId: true,
+}
 
-  const data = JSON.parse(rawData).budgets as RawBudget[];
-  return data;
+type TX = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+async function getSpentAmount(tx: TX, userId: string, category: string) {
+  const currentMonthRange = getMonthRange(new Date())
+
+  const aggregate = await tx.transaction.aggregate({
+    _sum: { amount: true },
+    where: {
+      userId,
+      category,
+      date: {
+        gte: currentMonthRange.start,
+        lt: currentMonthRange.end
+      },
+    },
+  });
+
+  return Math.abs(aggregate._sum.amount ?? 0);
 }
 
 export async function getBudgets(): Promise<GetBudgetResponse> {
-  cacheLife("hours");
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
 
   try {
-    const today = new Date("1 August 2024");
+    const currentMonthRange = getMonthRange(new Date())
 
-    const [rawBudgets, { data: transactions }] = await Promise.all([
-      getMockData(),
-      getTransactions({
-        year: today.getFullYear(),
-        month: today.getMonth() + 1,
-      }),
-    ]);
+    const budgets = await prisma.$transaction(async (tx) => {
 
-    const transactionsByCategory = transactions.reduce(
-      (acc, transaction) => {
-        const category = transaction.category;
-        if (!acc[category]) acc[category] = [];
-        acc[category].push(transaction);
-        return acc;
-      },
-      {} as Record<string, Transaction[]>,
-    );
+      const budgets = await tx.budget.findMany({
+        where: { userId: session.userId },
+        omit: omitBudgetProperties,
+      });
 
-    const budgets: Budget[] = rawBudgets.map((rawBudget, idx) => {
-      const spending = transactionsByCategory[rawBudget.category] ?? [];
-      const spent = spending.reduce((total, { amount }) => {
-        return total + (amount < 0 ? Math.abs(amount) : 0);
-      }, 0);
+      const categories = budgets.map(budget => budget.category);
+      const spendingByCategory = await tx.transaction.groupBy({
+        by: ["category"],
+        _sum: { amount: true },
+        where: {
+          userId: session.userId,
+          date: {
+            gte: currentMonthRange.start,
+            lt: currentMonthRange.end
+          },
+          category: {
+            in: categories
+          }
+        }
+      });
 
-      return {
-        ...rawBudget,
-        spent,
-        transactions: spending,
-        maximum: parseInt(rawBudget.maximum, 10),
-        id: idx.toString(),
-      };
+      const merged: Budget[] = [];
+      for (let i = 0; i < budgets.length; i++) {
+        const budgetData = budgets[i];
+        const spent = spendingByCategory.find(spending => spending.category === budgetData.category)?._sum.amount || 0;
+        merged.push({ ...budgetData, spent: Math.abs(spent) })
+      }
+
+      return merged
     });
 
     return { data: { budgets } };
@@ -78,11 +92,25 @@ export async function getBudgets(): Promise<GetBudgetResponse> {
 export async function getBudgetById(
   id: string,
 ): Promise<GetBudgetByIdResponse> {
-  try {
-    const budgets = await getBudgets();
-    const budget = budgets.data.budgets.find((budget) => budget.id === id);
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
 
-    if (!budget) throw new Error(`Can't find budget with id:${id}`);
+  try {
+    const budget = await prisma.$transaction(async (tx) => {
+      const budget = await tx.budget.findUnique({
+        where: {
+          id: id,
+          userId: session.userId
+        },
+        omit: omitBudgetProperties,
+      });
+
+      if (!budget) return null;
+
+      const spent = await getSpentAmount(tx, session.userId, budget.category);
+
+      return { ...budget, spent }
+    })
 
     return { data: { budget } };
   } catch (error) {
@@ -100,39 +128,46 @@ export async function createBudget({
   category,
   maximum,
   theme,
-}: CreateNewBudgetProps): Promise<UpdateBudgetByIdResponse> {
+}: CreateNewBudgetProps): Promise<CreateNewBudgetResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const budgets = await getBudgets();
-    const budget = budgets.data.budgets.find(
-      (budget) => budget.category === category,
-    );
+    const today = new Date();
 
-    if (budget) {
-      throw new Error(`Budget with category:${category} already exist`);
-    }
+    const budget = await prisma.$transaction(async (tx) => {
+      const budgetResult = await tx.budget.findUnique({
+        where: {
+          category_userId: {
+            category,
+            userId: session.userId
+          }
+        }
+      });
 
-    const today = new Date("1 August 2024");
+      if (budgetResult) {
+        throw new Error(`Budget with category:${category} already exist`);
+      }
 
-    const { data: transactions } = await getTransactions({
-      category,
-      year: today.getFullYear(),
-      month: today.getMonth() + 1,
-    });
+      const budget = await tx.budget.create({
+        data: {
+          category,
+          maximum,
+          theme,
+          dueDate: new Date(today.getFullYear(), today.getMonth() + 1, 1),
+          userId: session.userId
+        },
+        omit: omitBudgetProperties,
+      })
 
-    const spent = transactions.reduce((total, { amount }) => {
-      return total + (amount < 0 ? Math.abs(amount) : 0);
-    }, 0);
+      const spent = await getSpentAmount(tx, session.userId, budget.category);
 
-    const merged = {
-      id: "newID",
-      category,
-      maximum,
-      theme,
-      spent,
-      transactions,
-    };
+      if (!budget) return null;
 
-    return { data: { budget: merged } };
+      return { ...budget, spent };
+    })
+
+    return { data: { budget } };
   } catch (error) {
     console.error("failed update budget", error);
     return {
@@ -148,15 +183,37 @@ export async function updateBudgetById({
   id,
   updatedFields,
 }: UpdateBudgetByIdProps): Promise<UpdateBudgetByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const budgets = await getBudgets();
-    const budget = budgets.data.budgets.find((budget) => budget.id === id);
+    const budget = await prisma.$transaction(async (tx) => {
+      const budgetResult = await tx.budget.findUnique({
+        where: {
+          id,
+          userId: session.userId
+        }
+      })
 
-    if (!budget) throw new Error(`Budget with id:${id} doesn't exist`);
+      if (!budgetResult || budgetResult.userId !== session.userId) {
+        throw new Error(`Budget with id:${id} doesn't exist`)
+      };
 
-    const merged = { ...budget, ...updatedFields };
+      const budget = await tx.budget.update({
+        where: {
+          id,
+          userId: session.userId
+        },
+        data: updatedFields,
+        omit: omitBudgetProperties,
+      });
 
-    return { data: { budget: merged } };
+      const spent = await getSpentAmount(tx, session.userId, budget.category);
+
+      return { ...budget, spent }
+    });
+
+    return { data: { budget } };
   } catch (error) {
     console.error("failed update budget", error);
     return {
@@ -171,13 +228,36 @@ export async function updateBudgetById({
 export async function deleteBudgetById(
   id: string,
 ): Promise<UpdateBudgetByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const budgets = await getBudgets();
-    const budget = budgets.data.budgets.find((budget) => budget.id === id);
+    const budget = await prisma.$transaction(async (tx) => {
+      const budgetResult = await tx.budget.findUnique({
+        where: {
+          id,
+          userId: session.userId
+        }
+      })
 
-    if (!budget) throw new Error(`Budget with id:${id} doesn't exist`);
+      if (!budgetResult || budgetResult.userId !== session.userId) {
+        throw new Error(`Budget with id:${id} doesn't exist`)
+      };
 
-    return { data: { budget: budget } };
+      const budget = await tx.budget.delete({
+        where: {
+          id,
+          userId: session.userId
+        },
+        omit: omitBudgetProperties,
+      });
+
+      const spent = await getSpentAmount(tx, session.userId, budget.category);
+
+      return { ...budget, spent }
+    });
+
+    return { data: { budget } };
   } catch (error) {
     console.error("failed delete budget", error);
     return {

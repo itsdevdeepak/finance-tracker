@@ -12,29 +12,21 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Period {
-  WEEKLY
-  MONTHLY
-  YEARLY
-}
-
-enum Type {
-  INCOME
-  EXPANSE
-}
-
 model Transaction {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   name      String
   amount    Int
-  type      Type
   category  String
   date      DateTime
   avatar    String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  recurringBillId String?
+  recurringBill   RecurringBill? @relation(fields: [recurringBillId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@map("transaction")
@@ -48,10 +40,11 @@ model Budget {
   dueDate   DateTime
   category  String
   theme     String
-  period    Period   @default(MONTHLY)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([category, userId])
   @@index([userId])
   @@map("budget")
 }
@@ -61,29 +54,32 @@ model Pot {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   name      String
+  total     Int      @default(0)
   target    Int
-  dueDate   DateTime
   theme     String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name, userId])
   @@index([userId])
   @@map("pot")
 }
 
 model RecurringBill {
-  id           String   @id @default(uuid())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  name         String
-  amount       Int
-  dueDate      DateTime
-  lastPaidDate DateTime
-  category     String
-  period       Period   @default(MONTHLY)
-  avatar       String?
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  amount    Int
+  dueDate   Int      @db.SmallInt
+  category  String
+  avatar    String?
+
+  transactions Transaction[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("recurringBill")

@@ -1,37 +1,51 @@
 import { categorySelectOptions, SortingSelectOptions } from "./constants";
-import { CategoryOption, SortingOption, Transaction } from "./types";
+import { CategoryOption, SortingOption } from "./types";
 import { decodeSearchParam } from "@/lib/utils/url";
-import { sortData } from "@/lib/utils/data-processing";
-import { formatDate } from "@/lib/utils/format";
 
 export function isValidSortOption(option: string): option is SortingOption {
   return SortingSelectOptions.includes(option as SortingOption);
 }
 
-export function sortTransactions(data: Transaction[], sortingOption: string) {
-  if (!isValidSortOption(sortingOption)) return data;
+export function getOrderBy(sortingOption: string): Record<string, "asc" | "desc"> {
+  if (!isValidSortOption(sortingOption)) return {
+    "date": "desc"
+  };
 
   switch (sortingOption) {
     case "Latest": {
-      return sortData(data, "date", "asc");
+      return {
+        "date": "desc"
+      }
     }
     case "Oldest": {
-      return sortData(data, "date", "desc");
+      return {
+        "date": "asc"
+      }
     }
     case "Highest": {
-      return sortData(data, "amount", "desc");
+      return {
+        "amount": "desc"
+      }
     }
     case "Lowest": {
-      return sortData(data, "amount", "asc");
+      return {
+        "amount": "asc"
+      }
     }
     case "A to Z": {
-      return sortData(data, "name", "asc");
+      return {
+        "name": "asc"
+      }
     }
     case "Z to A": {
-      return sortData(data, "name", "desc");
+      return {
+        "name": "desc"
+      }
     }
     default:
-      return data;
+      return {
+        "date": "desc"
+      };
   }
 }
 
@@ -39,32 +53,6 @@ export function isValidCategoryOption(
   option: string,
 ): option is CategoryOption {
   return categorySelectOptions.includes(option as CategoryOption);
-}
-
-export function filterTransactionWithCategory(
-  data: Transaction[],
-  category: string,
-) {
-  if (!isValidCategoryOption(category)) return data;
-  if (category === "All Transactions") return data;
-
-  return [...data].filter((transaction) => transaction.category === category);
-}
-
-export function filterTransactionWithDate(
-  data: Transaction[],
-  year: number,
-  month?: number,
-) {
-  return [...data].filter((transaction) => {
-    const transactionYear = transaction.date.getFullYear();
-    const transactionMonth = transaction.date.getMonth() + 1;
-
-    if (transactionYear !== year) return false;
-    if (month !== undefined && transactionMonth !== month) return false;
-
-    return true;
-  });
 }
 
 function sanitizeString(value: string | undefined, fallback = "") {

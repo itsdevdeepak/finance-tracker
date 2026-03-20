@@ -105,6 +105,10 @@ export default function SavingForm({
     ? "Withdrawing from Pot"
     : "Adding to Pot";
 
+  const projectedTotal = isWithdrawing
+    ? Math.max(0, pot.total - amount)
+    : pot.total + amount;
+
   return (
     <DialogCard
       heading={heading}
@@ -122,7 +126,7 @@ export default function SavingForm({
           type="number"
           autoFocus={true}
           label={`Amount to ${isWithdrawing ? "Withdraw" : "Add"}`}
-          name="total"
+          name="amount"
           placeholder="e.g. 2000"
           min={0}
           max={amountLimit}
@@ -131,6 +135,7 @@ export default function SavingForm({
           onChange={(event) => setAmount(+event.target.value)}
           IconLeft={IconDollar}
         />
+        <input type="hidden" name="total" value={projectedTotal} />
         <button disabled={isPending} className="w-full button" type="submit">
           {isPending ? buttonPendingText : buttonText}
         </button>

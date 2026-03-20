@@ -1,26 +1,16 @@
-import fs from "fs/promises";
-import path from "path";
-
 import {
   GetTransactionsParams,
   GetTransactionsResponse,
   Transaction,
-  TransactionRaw,
 } from "./types";
 import {
-  filterTransactionWithCategory,
-  filterTransactionWithDate,
-  sortTransactions,
+  getOrderBy,
 } from "./utils";
-import { limitDataPerPage, searchData } from "@/lib/utils/data-processing";
-
-async function getMockData(): Promise<TransactionRaw[]> {
-  const filePath = path.join(process.cwd(), "src/lib/data/data.json");
-  const rawData = await fs.readFile(filePath, "utf-8");
-
-  const data = JSON.parse(rawData).transactions;
-  return data;
-}
+import { verifySession } from "@/lib/auth-session";
+import { prisma } from "@/lib/prisma";
+import { TransactionWhereInput } from "@/generated/prisma/models";
+import { categories } from "@/constants/transaction";
+import { getQueryConfig } from "@/lib/utils/prisma";
 
 export async function getTransactions({
   query,
@@ -31,56 +21,98 @@ export async function getTransactions({
   page = 1,
   limit,
 }: GetTransactionsParams): Promise<GetTransactionsResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    await new Promise((res) => {
-      setTimeout(res, 1000);
-    });
+    const filters: TransactionWhereInput[] = [];
+    const safePage = Number.isInteger(page) && page > 0 ? page : 1;
+    const safeMonth = month && month >= 1 && month <= 12 ? month : undefined;
 
-    const data = await getMockData();
-    let transactions: Transaction[] = data.map((transaction, idx) => ({
-      ...transaction,
-      id: "" + idx,
-      date: new Date(transaction.date),
-    }));
-
-    if (query) {
-      transactions = searchData(transactions, query, [
-        "name",
-        "category",
-        "amount",
-        "date",
-      ]);
-    }
-
-    if (category) {
-      transactions = filterTransactionWithCategory(transactions, category);
+    if (category && categories.includes(category)) {
+      filters.push({
+        category: {
+          equals: category,
+        }
+      });
     }
 
     if (year) {
-      transactions = filterTransactionWithDate(transactions, year, month);
+      const startDate = new Date(year, safeMonth ? safeMonth - 1 : 0, 1);
+      const endDate = safeMonth ? new Date(year, safeMonth, 1) : new Date(year + 1, 0, 1);
+
+      filters.push({
+        date: {
+          gte: startDate,
+          lt: endDate
+        }
+      });
     }
 
-    const totalItems = transactions.length;
-    const totalPages = limit ? Math.ceil(totalItems / limit) : 1;
+    if (query) {
+      const searchableFields = getQueryConfig<Transaction>(query, [
+        { name: "name" }, { name: "category" }, { name: "amount", isNumber: true },
+      ])
 
-    if (sort) {
-      transactions = sortTransactions(transactions, sort);
+      filters.push({ OR: searchableFields });
     }
 
-    if (limit !== undefined) {
-      transactions = limitDataPerPage(transactions, page, limit);
+    const where: TransactionWhereInput = {
+      userId: session.userId,
+      ...(filters.length ? { AND: filters } : {}),
+    };
+
+    const pagination = limit && limit > 0
+      ? {
+        skip: (safePage - 1) * limit,
+        take: limit,
+      }
+      : undefined;
+
+    const orderBy = getOrderBy(sort ?? "");
+
+    let totalItems = 0;
+    let transactions;
+
+    if (pagination) {
+      [totalItems, transactions] = await prisma.$transaction([
+        prisma.transaction.count({ where }),
+        prisma.transaction.findMany({
+          where,
+          orderBy,
+          ...pagination,
+          omit: {
+            updatedAt: true,
+            createdAt: true,
+            userId: true
+          }
+        })
+      ]);
+    } else {
+      transactions = await prisma.transaction.findMany({
+        where,
+        orderBy,
+        omit: {
+          updatedAt: true,
+          createdAt: true,
+          userId: true
+        }
+      });
+      totalItems = transactions.length;
     }
+
+    const totalPages = pagination ? Math.ceil(totalItems / pagination.take) : 1;
 
     return {
       data: transactions,
       meta: {
         totalPages,
         totalItems,
-        currentPage: page,
+        currentPage: safePage,
       },
     };
   } catch (error) {
-    console.log("failed getting transaction data", error);
+    console.error("failed getting transaction data", error);
     return { data: [], error: "failed getting transaction data" };
   }
 }

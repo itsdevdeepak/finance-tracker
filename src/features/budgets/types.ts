@@ -1,5 +1,3 @@
-import { Transaction } from "../transactions/types";
-
 export type RawBudget = {
   category: string;
   theme: string;
@@ -12,8 +10,8 @@ export type Budget = {
   theme: string;
   spent: number;
   maximum: number;
-  transactions: Transaction[];
 };
+
 export type BudgetWithoutId = Omit<Budget, "id">;
 
 export type GetBudgetResponse = {

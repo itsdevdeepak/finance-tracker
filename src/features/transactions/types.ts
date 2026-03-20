@@ -11,12 +11,11 @@ export type TransactionRaw = {
 
 export type Transaction = {
   id: string;
-  avatar: string;
+  avatar: string | null;
   name: string;
   category: string;
   date: Date;
   amount: number;
-  recurring: boolean;
 };
 
 export type SortingOption = (typeof SortingSelectOptions)[number];

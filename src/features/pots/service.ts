@@ -1,33 +1,29 @@
-import fs from "fs/promises";
-import path from "path";
-
 import {
   CreateNewPotResponse,
   DeletePotByIdResponse,
   GetPotsByIdResponse,
   GetPotsResponse,
   Pot,
-  PotRaw,
   UpdatePotByIdResponse,
 } from "./types";
+import { verifySession } from "@/lib/auth-session";
+import { prisma } from "@/lib/prisma";
 
-async function getMockData() {
-  const filePath = path.join(process.cwd(), "src/lib/data/data.json");
-  const rawData = await fs.readFile(filePath, "utf-8");
-
-  const data = JSON.parse(rawData).pots as PotRaw[];
-  return data;
+const omitPotProperties = {
+  createdAt: true,
+  updatedAt: true,
+  userId: true,
 }
 
 export async function getPots(): Promise<GetPotsResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const rawData = await getMockData();
-    const pots: Pot[] = rawData.map((pot, idx) => ({
-      ...pot,
-      target: parseInt(pot.target, 10),
-      total: parseInt(pot.total, 10),
-      id: idx.toString(),
-    }));
+    const pots = await prisma.pot.findMany({
+      where: { userId: session.userId },
+      omit: omitPotProperties
+    })
 
     return { data: { pots } };
   } catch (error) {
@@ -42,9 +38,17 @@ export async function getPots(): Promise<GetPotsResponse> {
 }
 
 export async function getPotById(id: string): Promise<GetPotsByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const allPots = await getPots();
-    const pot = allPots.data.pots.find((pot) => pot.id === id) ?? null;
+    const pot = await prisma.pot.findUnique({
+      where: {
+        id: id,
+        userId: session.userId
+      },
+      omit: omitPotProperties
+    })
 
     return { data: { pot } };
   } catch (error) {
@@ -58,37 +62,27 @@ export async function getPotById(id: string): Promise<GetPotsByIdResponse> {
   }
 }
 
-export async function findPotByName(name: string) {
-  try {
-    const { data } = await getPots();
-    const pot = data.pots.find(
-      (pot) => pot.name.toLowerCase() === name.trim().toLowerCase(),
-    );
-    if (!pot) throw new Error(`Can't find pot with name: ${name}`);
-    return { data: { pot } };
-  } catch (error) {
-    console.error("failed update pot", error);
-    return {
-      data: {
-        pot: null,
-      },
-      error: "failed to find pot with name",
-    };
-  }
-}
-
 export async function updatePotById(
   id: string,
   updatedFields: Partial<Omit<Pot, "id">>,
 ): Promise<UpdatePotByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const { data } = await getPotById(id);
+    const existingPot = await prisma.pot.findUnique({ where: { id, userId: session.userId } });
 
-    if (!data.pot) throw new Error(`Pot with id:${id} doesn't exist`);
+    if (!existingPot || existingPot.userId !== session.userId) {
+      throw new Error(`Pot with id:${id} doesn't exist`);
+    }
 
-    const merged = { ...data.pot, ...updatedFields };
+    const updatedPot = await prisma.pot.update({
+      where: { id, userId: session.userId },
+      data: updatedFields,
+      omit: omitPotProperties
+    });
 
-    return { data: { pot: merged } };
+    return { data: { pot: updatedPot } };
   } catch (error) {
     console.error("failed update pot", error);
     return {
@@ -103,12 +97,24 @@ export async function updatePotById(
 export async function deletePotById(
   id: string,
 ): Promise<DeletePotByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const { data } = await getPotById(id);
+    const existingPot = await prisma.pot.findUnique({ where: { id, userId: session.userId } });
 
-    if (!data.pot) throw new Error(`Pot with id:${id} doesn't exist`);
+    if (!existingPot || existingPot.userId !== session.userId) {
+      throw new Error(`Pot with id:${id} doesn't exist`);
+    }
 
-    return { data: { pot: data.pot } };
+    const deletedPot = await prisma.pot.delete({
+      where: {
+        id,
+      },
+      omit: omitPotProperties
+    })
+
+    return { data: { pot: deletedPot } };
   } catch (error) {
     console.error("failed to delete pot", error);
     return {
@@ -123,13 +129,33 @@ export async function deletePotById(
 export async function createNewPot(
   potData: Omit<Pot, "id">,
 ): Promise<CreateNewPotResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const { data } = await findPotByName(potData.name);
+    const existingPot = await prisma.pot.findUnique({
+      where:
+      {
+        name_userId: {
+          name: potData.name,
+          userId: session.userId
+        }
+      }
+    });
 
-    if (data.pot)
+    if (existingPot && existingPot.userId !== session.userId) {
       throw new Error(`Pot with name:${potData.name} already exist`);
+    }
 
-    return { data: { pot: { id: "newID", ...potData } } };
+    const newPot = await prisma.pot.create({
+      data: {
+        ...potData,
+        userId: session.userId
+      },
+      omit: omitPotProperties
+    })
+
+    return { data: { pot: newPot } };
   } catch (error) {
     console.error("failed to create pot", error);
     return {

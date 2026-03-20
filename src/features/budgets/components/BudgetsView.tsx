@@ -1,17 +1,10 @@
-"use client";
-
-import { use } from "react";
-import { GetBudgetResponse } from "../types";
 import BudgetsChart from "./BudgetChart";
-import Budgets from "./Budgets";
 import { BudgetChartSummary } from "./BudgetChartSummary";
+import { getBudgets } from "../service";
+import BudgetCards from "./BudgetCards";
 
-export default function BudgetsView({
-  getBudgetsResponse,
-}: {
-  getBudgetsResponse: Promise<GetBudgetResponse>;
-}) {
-  const { data } = use(getBudgetsResponse);
+export default async function BudgetsView() {
+  const { data } = await getBudgets();
 
   return (
     <div className="with-sidebar gap-xl *:first:basis-[420px] *:shrink *:grow">
@@ -19,7 +12,7 @@ export default function BudgetsView({
         budgets={data.budgets}
         renderCaption={(budgets) => <BudgetChartSummary budgets={budgets} />}
       />
-      <Budgets budgets={data.budgets} />
+      <BudgetCards budgets={data.budgets} />
     </div>
   );
 }

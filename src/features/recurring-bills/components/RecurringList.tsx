@@ -67,7 +67,10 @@ export default function RecurringList({
         >
           <RecurringItem
             recurringBill={recurringBill}
-            status={getBillStatus(recurringBill)}
+            status={getBillStatus(
+              recurringBill.dueDate,
+              recurringBill.lastPaidDate,
+            )}
           />
         </li>
       ))}

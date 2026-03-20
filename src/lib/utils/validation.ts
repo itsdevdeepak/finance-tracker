@@ -104,7 +104,7 @@ export function validateCurrencyCode(value: unknown): string | null {
   const currencyCode = validateString(value, { minLength: 3, maxLength: 3 });
 
   if (!currencyCode) return null;
-  if (!CurrencyCodes.includes(currencyCode.toUpperCase())) return null;
+  if (!CurrencyCodes.includes(currencyCode.toUpperCase() as typeof CurrencyCodes[number])) return null;
 
   return currencyCode.toUpperCase();
 }

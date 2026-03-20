@@ -1,10 +1,11 @@
 export type RecurringBill = {
   id: string;
   name: string;
-  avatar: string;
+  avatar: string | null;
   category: string;
   amount: number;
   dueDate: number;
+  lastPaidDate: Date | null
 };
 
 export type GetRecurringBillsParams = {

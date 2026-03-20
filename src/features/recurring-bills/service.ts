@@ -1,72 +1,91 @@
-import fs from "fs/promises";
-import path from "path";
+import { GetRecurringBillsParams, GetRecurringBillsResponse, RecurringBill } from "./types";
+import { getBillStatus, getOrderBy } from "./utils";
+import { verifySession } from "@/lib/auth-session";
+import { RecurringBillWhereInput } from "@/generated/prisma/models";
+import { getQueryConfig } from "@/lib/utils/prisma";
+import { prisma } from "@/lib/prisma";
 
-import { TransactionRaw } from "../transactions/types";
-import { GetRecurringBillsParams, GetRecurringBillsResponse } from "./types";
-import { getBillStatus, sortRecurringBills } from "./utils";
-import { limitDataPerPage, searchData } from "@/lib/utils/data-processing";
-
-async function getMockData() {
-  const filePath = path.join(process.cwd(), "src/lib/data/data.json");
-  const rawData = await fs.readFile(filePath, "utf-8");
-
-  const data = JSON.parse(rawData).transactions as TransactionRaw[];
-  const filtered = data.filter((transaction) => transaction.recurring);
-
-  const result = filtered.reduce((acc: TransactionRaw[], curr) => {
-    const exist = acc.findIndex((t) => t.name === curr.name);
-    if (exist >= 0) {
-      const d1 = new Date(curr.date);
-      const d2 = new Date(acc[exist].date);
-      if (d1.getTime() > d2.getTime()) {
-        acc[exist] = curr;
-      }
-    } else {
-      acc.push(curr);
-    }
-    return acc;
-  }, []);
-  return result;
-}
+const omitProperties = {
+  updatedAt: true,
+  createdAt: true,
+  userId: true
+} as const
 
 export async function getRecurringBills({
   query,
   sort,
   page = 1,
-  limit = 10,
+  limit,
 }: GetRecurringBillsParams): Promise<GetRecurringBillsResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
   try {
-    const rawData = await getMockData();
-    let recurringBills = rawData.map(
-      ({ name, amount, category, avatar, date }, idx) => ({
-        name,
-        avatar,
-        category,
-        amount: Math.abs(amount),
-        id: idx.toString(),
-        dueDate: new Date(date).getDate(),
-      }),
-    );
+    const filters: RecurringBillWhereInput[] = [];
 
     if (query) {
-      recurringBills = searchData(recurringBills, query, [
-        "name",
-        "amount",
-        "dueDate",
-        "category",
-      ]);
+      const searchableFields = getQueryConfig<RecurringBill>(query, [
+        { name: "name" }, { name: "category" }, { name: "amount", isNumber: true },
+      ])
+
+      filters.push({ OR: searchableFields });
     }
 
-    if (sort) {
-      recurringBills = sortRecurringBills(recurringBills, sort);
-    }
+    const safePage = Number.isInteger(page) && page > 0 ? page : 1;
+    const pagination = limit && limit > 0
+      ? {
+        skip: (safePage - 1) * limit,
+        take: limit,
+      }
+      : undefined;
 
-    const totalItems = recurringBills.length;
-    const totalPages = Math.ceil(totalItems / limit);
+    const where: RecurringBillWhereInput = {
+      userId: session.userId,
+      ...(filters.length > 0 ? { AND: filters } : {}),
+    };
 
-    const summary = recurringBills.reduce(
+    const [allBills, paginatedBills] = await prisma.$transaction(async (tx) => {
+      const paginatedBills = await tx.recurringBill.findMany({
+        where,
+        ...(pagination || {}),
+        omit: omitProperties,
+        orderBy: getOrderBy(sort || ""),
+        include: {
+          transactions: {
+            take: 1,
+            select: { date: true },
+            orderBy: {
+              date: "desc"
+            },
+          }
+        }
+      });
+
+      const allBills = await tx.recurringBill.findMany({
+        where: { userId: session.userId },
+        omit: omitProperties,
+        include: {
+          transactions: {
+            take: 1,
+            select: { date: true },
+            orderBy: {
+              date: "desc"
+            },
+          }
+        }
+      });
+
+      const formattedBills = paginatedBills.map(({ transactions, ...bill }) => ({ ...bill, lastPaidDate: transactions[0]?.date || null }));
+      const formattedAllBills = allBills.map(({ transactions, ...bill }) => ({ ...bill, lastPaidDate: transactions[0]?.date || null }));
+
+      return [formattedAllBills, formattedBills]
+    });
+
+    const totalPages = pagination ? Math.ceil(allBills.length / pagination.take) : 1;
+
+    const summary = allBills.reduce(
       (acc, bill) => {
-        const status = getBillStatus(bill);
+        const status = getBillStatus(bill.dueDate, bill.lastPaidDate);
         acc.totalAmount += bill.amount;
         acc.totalCount += 1;
 
@@ -97,16 +116,14 @@ export async function getRecurringBills({
       },
     );
 
-    recurringBills = limitDataPerPage(recurringBills, page, limit);
-
     return {
       data: {
         summary,
-        recurringBills,
+        recurringBills: paginatedBills,
       },
       meta: {
-        currentPage: page,
-        totalItems,
+        currentPage: safePage,
+        totalItems: allBills.length,
         totalPages,
       },
     };
