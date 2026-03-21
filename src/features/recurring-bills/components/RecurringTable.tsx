@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Table from "@/components/ui/Table";
 import { RecurringBill } from "../types";
 import { formatCurrency } from "@/lib/utils/format";
 import { formatToMonthlyDate, getBillStatus } from "../utils";
 import IconBillPaid from "@/components/icons/IconBillPaid";
 import IconBillDue from "@/components/icons/IconBillDue";
+import Avatar from "./Avatar";
 
 export default function RecurringTable({
   recurringBills,
@@ -34,13 +34,7 @@ export default function RecurringTable({
             <Table.Row key={recurring.id} data-avatar={recurring.avatar}>
               <Table.Data>
                 <div className="inline-flex items-center gap-base font-bold">
-                  <Image
-                    className="rounded-full"
-                    src={recurring.avatar}
-                    alt=""
-                    width={40}
-                    height={40}
-                  />
+                  <Avatar imageUrl={recurring.avatar} />
                   {recurring.name}
                 </div>
               </Table.Data>

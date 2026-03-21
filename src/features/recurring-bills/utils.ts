@@ -1,4 +1,6 @@
 import { isValidSortOption } from "../transactions/utils";
+import { categories } from "@/constants/transaction";
+import { validateNumber, validateString } from "@/lib/utils/validation";
 
 export function formatToMonthlyDate(date: Date | number) {
   try {
@@ -100,4 +102,24 @@ export function getOrderBy(sortingOption: string): Record<string, "asc" | "desc"
         "dueDate": "asc"
       };
   }
+}
+
+export function validateRecurringBillName(rawName: unknown) {
+  return validateString(rawName, { minLength: 1, maxLength: 30 });
+}
+
+export function validateRecurringBillCategory(rawCategory: unknown) {
+  const category = validateString(rawCategory, { minLength: 1, maxLength: 30 });
+  if (!category || !categories.includes(category)) return null;
+  return category;
+}
+
+export function validateRecurringBillAmount(rawAmount: unknown) {
+  return validateNumber(rawAmount);
+}
+
+export function validateDueDate(rawDueDate: unknown) {
+  const parsedDueDate = validateNumber(rawDueDate, { min: 1, max: 31 });
+  if (!parsedDueDate || !Number.isInteger(parsedDueDate)) return null;
+  return parsedDueDate;
 }

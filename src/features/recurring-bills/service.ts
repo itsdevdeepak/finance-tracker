@@ -1,4 +1,4 @@
-import { GetRecurringBillsParams, GetRecurringBillsResponse, RecurringBill } from "./types";
+import { CreateRecurringBillResponse, DeleteRecurringBillByIdResponse, GetRecurringBillByIdResponse, GetRecurringBillsParams, GetRecurringBillsResponse, RecurringBill, UpdateRecurringBillByIdResponse } from "./types";
 import { getBillStatus, getOrderBy } from "./utils";
 import { verifySession } from "@/lib/auth-session";
 import { RecurringBillWhereInput } from "@/generated/prisma/models";
@@ -142,6 +142,217 @@ export async function getRecurringBills({
           totalCount: 0,
         },
         recurringBills: [],
+      },
+      error: "failed getting recurring data",
+    };
+  }
+}
+
+export async function getRecurringBillById(id: string): Promise<GetRecurringBillByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+  try {
+    const recurringBillResult = await prisma.recurringBill.findUnique({
+      where: {
+        id,
+        userId: session.userId,
+      },
+      omit: omitProperties,
+      include: {
+        transactions: {
+          take: 1,
+          select: { date: true },
+          orderBy: {
+            date: "desc",
+          },
+        },
+      },
+    });
+
+    if (!recurringBillResult) {
+      return {
+        data: {
+          recurringBill: null,
+        },
+      };
+    }
+
+    const { transactions, ...recurringBill } = recurringBillResult;
+
+    return {
+      data: {
+        recurringBill: {
+          ...recurringBill,
+          lastPaidDate: transactions[0]?.date || null,
+        },
+      },
+    };
+  } catch (error) {
+    console.log("failed getting recurring data", error);
+    return {
+      data: {
+        recurringBill: null
+      },
+      error: "failed getting recurring data",
+    };
+  }
+}
+
+export async function createRecurringBill(recurringBillData: Omit<RecurringBill, "id" | "userId" | "lastPaidDate">): Promise<CreateRecurringBillResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+  try {
+    const existingRecurringBill = await prisma.recurringBill.findFirst({
+      where: {
+        userId: session.userId,
+        name: recurringBillData.name,
+        amount: recurringBillData.amount,
+        category: recurringBillData.category,
+        dueDate: recurringBillData.dueDate,
+      },
+    });
+
+    if (existingRecurringBill) {
+      throw new Error("Recurring bill with same details already exists");
+    }
+
+    const recurringBill = await prisma.recurringBill.create({
+      data: {
+        ...recurringBillData,
+        avatar: recurringBillData.avatar || null,
+        userId: session.userId,
+      },
+      omit: omitProperties,
+    });
+
+    return {
+      data: {
+        recurringBill: {
+          ...recurringBill,
+          lastPaidDate: null,
+        },
+      },
+    };
+  } catch (error) {
+    console.log("failed getting recurring data", error);
+    return {
+      data: {
+        recurringBill: null
+      },
+      error: "failed getting recurring data",
+    };
+  }
+}
+
+export async function updateRecurringBillById(id: string, updatedFields: Partial<Omit<RecurringBill, "id" | "userId" | "lastPaidDate">>): Promise<UpdateRecurringBillByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+  try {
+    const recurringBill = await prisma.$transaction(async (tx) => {
+      const recurringBillResult = await tx.recurringBill.findUnique({
+        where: {
+          id,
+          userId: session.userId,
+        },
+      });
+
+      if (!recurringBillResult || recurringBillResult.userId !== session.userId) {
+        throw new Error(`Recurring bill with id:${id} doesn't exist`);
+      }
+
+      const updatedRecurringBill = await tx.recurringBill.update({
+        where: {
+          id,
+          userId: session.userId,
+        },
+        data: updatedFields,
+        omit: omitProperties,
+      });
+
+      const latestTransaction = await tx.transaction.findFirst({
+        where: {
+          userId: session.userId,
+          recurringBillId: id,
+        },
+        orderBy: {
+          date: "desc",
+        },
+        select: {
+          date: true,
+        },
+      });
+
+      return {
+        ...updatedRecurringBill,
+        lastPaidDate: latestTransaction?.date || null,
+      };
+    });
+
+    return {
+      data: {
+        recurringBill,
+      },
+    };
+  } catch (error) {
+    console.log("failed getting recurring data", error);
+    return {
+      data: {
+        recurringBill: null
+      },
+      error: "failed getting recurring data",
+    };
+  }
+}
+
+export async function deleteRecurringBillById(id: string): Promise<DeleteRecurringBillByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+  try {
+    const recurringBill = await prisma.$transaction(async (tx) => {
+      const recurringBillResult = await tx.recurringBill.findUnique({
+        where: {
+          id,
+          userId: session.userId,
+        },
+        include: {
+          transactions: {
+            take: 1,
+            select: { date: true },
+            orderBy: {
+              date: "desc",
+            },
+          },
+        },
+      });
+
+      if (!recurringBillResult || recurringBillResult.userId !== session.userId) {
+        throw new Error(`Recurring bill with id:${id} doesn't exist`);
+      }
+
+      const deletedRecurringBill = await tx.recurringBill.delete({
+        where: {
+          id,
+          userId: session.userId,
+        },
+        omit: omitProperties,
+      });
+
+      return {
+        ...deletedRecurringBill,
+        lastPaidDate: recurringBillResult.transactions[0]?.date || null,
+      };
+    });
+
+    return {
+      data: {
+        recurringBill,
+      },
+    };
+  } catch (error) {
+    console.log("failed getting recurring data", error);
+    return {
+      data: {
+        recurringBill: null
       },
       error: "failed getting recurring data",
     };

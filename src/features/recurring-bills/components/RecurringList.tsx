@@ -1,9 +1,9 @@
-import Image from "next/image";
 import { RecurringBill } from "../types";
 import { formatCurrency } from "@/lib/utils/format";
 import { formatToMonthlyDate, getBillStatus } from "../utils";
 import IconBillPaid from "@/components/icons/IconBillPaid";
 import IconBillDue from "@/components/icons/IconBillDue";
+import Avatar from "./Avatar";
 
 function RecurringItem({
   recurringBill,
@@ -15,12 +15,9 @@ function RecurringItem({
   return (
     <div className="flex gap-sm justify-between">
       <div className="flex items-center gap-sm grow">
-        <Image
+        <Avatar
           className="w-8 h-8 rounded-full"
-          src={recurringBill.avatar}
-          alt=""
-          width={32}
-          height={32}
+          imageUrl={recurringBill.avatar}
         />
         <div className="flow-2xs">
           <p className="font-bold">{recurringBill.name}</p>

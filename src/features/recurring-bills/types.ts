@@ -39,3 +39,23 @@ export type GetRecurringBillsResponse = {
 
   error?: string;
 };
+
+export type GetRecurringBillByIdResponse = {
+  data: { recurringBill: RecurringBill | null };
+  error?: string;
+};
+
+export type CreateRecurringBillResponse = {
+  data: { recurringBill: RecurringBill | null };
+  error?: string;
+};
+
+export type UpdateRecurringBillByIdResponse = {
+  data: { recurringBill: RecurringBill | null };
+  error?: string;
+};
+
+export type DeleteRecurringBillByIdResponse = {
+  data: { recurringBill: RecurringBill | null };
+  error?: string;
+};
