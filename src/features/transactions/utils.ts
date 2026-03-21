@@ -1,3 +1,4 @@
+import { validateNumber, validateString } from "@/lib/utils/validation";
 import { categorySelectOptions, SortingSelectOptions } from "./constants";
 import { CategoryOption, SortingOption } from "./types";
 import { decodeSearchParam } from "@/lib/utils/url";
@@ -68,6 +69,44 @@ function sanitizeNumber(value: string | undefined, fallback = 0) {
   const num = parseInt(decodeSearchParam(value), 10);
   return Number.isNaN(num) || num < 0 ? fallback : num;
 }
+
+
+export function validateName(rawName: unknown) {
+  return validateString(rawName, { minLength: 1, maxLength: 30 });
+}
+
+export function validateCategory(rawCategory: unknown) {
+  const category = validateString(rawCategory, { minLength: 1, maxLength: 30 });
+  if (!category || !isValidCategoryOption(category)) return null;
+  return category;
+}
+
+export function validateAmount(rawAmount: unknown) {
+  return validateNumber(rawAmount);
+}
+
+export function validateDate(rawDate: unknown) {
+  const dateString = validateString(rawDate, { minLength: 6 });
+  if (!dateString) return null;
+
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+export function validateAvatar(rawAvatar: unknown) {
+  const avatarString = validateString(rawAvatar, { minLength: 1 });
+  if (!avatarString) return null;
+
+  try {
+    const url = new URL(avatarString);
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg)$/i;
+    if (!imageExtensions.test(url.pathname)) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 
 export function sanitizeSearchParams(
   searchParams: Record<string, string | string[] | undefined>,

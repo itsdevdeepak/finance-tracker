@@ -2,6 +2,7 @@ import Table from "@/components/ui/Table";
 import { Transaction } from "../types";
 import Image from "next/image";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import Avatar from "./Avatar";
 
 export default function TransactionTable({
   className = "",
@@ -27,13 +28,7 @@ export default function TransactionTable({
             <Table.Row key={transaction.id} data-avatar={transaction.avatar}>
               <Table.Data>
                 <div className="inline-flex items-center gap-base font-bold">
-                  <Image
-                    className="rounded-full"
-                    src={transaction.avatar}
-                    alt=""
-                    width={40}
-                    height={40}
-                  />
+                  <Avatar imageUrl={transaction.avatar} />
                   {transaction.name}
                 </div>
               </Table.Data>

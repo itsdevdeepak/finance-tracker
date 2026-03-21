@@ -1,7 +1,11 @@
 import {
+  CreateTransactionResponse,
+  DeleteTransactionByIdResponse,
+  GetTransactionByIdResponse,
   GetTransactionsParams,
   GetTransactionsResponse,
   Transaction,
+  UpdateTransactionByIdResponse,
 } from "./types";
 import {
   getOrderBy,
@@ -11,6 +15,12 @@ import { prisma } from "@/lib/prisma";
 import { TransactionWhereInput } from "@/generated/prisma/models";
 import { categories } from "@/constants/transaction";
 import { getQueryConfig } from "@/lib/utils/prisma";
+
+const omitProperties = {
+  updatedAt: true,
+  createdAt: true,
+  userId: true
+} as const;
 
 export async function getTransactions({
   query,
@@ -81,22 +91,14 @@ export async function getTransactions({
           where,
           orderBy,
           ...pagination,
-          omit: {
-            updatedAt: true,
-            createdAt: true,
-            userId: true
-          }
+          omit: omitProperties
         })
       ]);
     } else {
       transactions = await prisma.transaction.findMany({
         where,
         orderBy,
-        omit: {
-          updatedAt: true,
-          createdAt: true,
-          userId: true
-        }
+        omit: omitProperties
       });
       totalItems = transactions.length;
     }
@@ -114,5 +116,132 @@ export async function getTransactions({
   } catch (error) {
     console.error("failed getting transaction data", error);
     return { data: [], error: "failed getting transaction data" };
+  }
+}
+
+export async function getTransactionById(id: string): Promise<GetTransactionByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: {
+        id: id,
+        userId: session.userId
+      },
+      omit: omitProperties
+    })
+
+    return { data: { transaction } };
+  } catch (error) {
+    console.error("failed getting transaction data", error);
+    return {
+      data: {
+        transaction: null,
+      },
+      error: "failed getting transaction data",
+    };
+  }
+}
+
+export async function createTransaction(transactionData: Omit<Transaction, "id" | "userId">): Promise<CreateTransactionResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
+  try {
+    const existingTransaction = await prisma.transaction.findUnique({
+      where: {
+        userId_name_date_category_amount: {
+          userId: session.userId,
+          name: transactionData.name,
+          amount: transactionData.amount,
+          category: transactionData.category,
+          date: transactionData.date
+        }
+      }
+    });
+
+    if (existingTransaction && existingTransaction.userId !== session.userId) {
+      throw new Error(`Pot with same date already exist`);
+    }
+
+    const newTransaction = await prisma.transaction.create({
+      data: { ...transactionData, avatar: transactionData.avatar || null, userId: session.userId },
+      omit: omitProperties
+    })
+
+    return { data: { transaction: newTransaction } }
+
+  } catch (error) {
+    console.error("failed create transaction", error);
+    return { data: { transaction: null }, error: "failed create transaction data" };
+  }
+}
+
+export async function updateTransactionById(id: string, updatedFields: Partial<Omit<Transaction, "id" | "userId">>): Promise<UpdateTransactionByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
+  try {
+    const existingTransaction = await prisma.transaction.findUnique({
+      where: {
+        id,
+        userId: session.userId,
+      }
+    });
+
+    if (existingTransaction && existingTransaction.userId !== session.userId) {
+      throw new Error(`Pot with id: ${id} already exist`);
+    }
+
+    const updatedTransaction = await prisma.transaction.update({
+      where: {
+        id,
+        userId: session.userId,
+      },
+      data: updatedFields,
+      omit: omitProperties
+    })
+
+    return { data: { transaction: updatedTransaction } }
+
+  } catch (error) {
+    if (error instanceof Error) {
+      return { data: { transaction: null }, error: error.message };
+    }
+    console.error("failed update transaction", error);
+    return { data: { transaction: null }, error: "failed update transaction" };
+  }
+}
+
+export async function deleteTransactionById(id: string): Promise<DeleteTransactionByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
+  try {
+    const existingTransaction = await prisma.transaction.findUnique({
+      where: {
+        id,
+        userId: session.userId,
+      }
+    });
+
+    if (existingTransaction && existingTransaction.userId !== session.userId) {
+      throw new Error(`Pot with id: ${id} already exist`);
+    }
+
+    const deletedTransaction = await prisma.transaction.delete({
+      where: {
+        id,
+        userId: session.userId,
+      },
+      omit: omitProperties
+    })
+
+    return { data: { transaction: deletedTransaction } }
+
+  } catch (error) {
+    console.error("failed to delete transaction", error);
+    return { data: { transaction: null }, error: "failed to delete transaction" };
   }
 }

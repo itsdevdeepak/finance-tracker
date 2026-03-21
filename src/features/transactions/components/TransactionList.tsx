@@ -1,17 +1,14 @@
-import Image from "next/image";
 import { Transaction } from "../types";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import Avatar from "./Avatar";
 
 function TransactionItem({ transaction }: { transaction: Transaction }) {
   return (
     <div className="flex gap-sm justify-between *:flex-1">
       <div className="flex items-center gap-sm">
-        <Image
+        <Avatar
           className="w-8 h-8 rounded-full"
-          src={transaction.avatar}
-          alt=""
-          width={32}
-          height={32}
+          imageUrl={transaction.avatar}
         />
         <div className="flow-2xs">
           <p className="font-bold">{transaction.name}</p>

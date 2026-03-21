@@ -41,3 +41,23 @@ export type GetTransactionsResponse = {
 
   error?: string;
 };
+
+export type GetTransactionByIdResponse = {
+  data: { transaction: Transaction | null };
+  error?: string;
+};
+
+export type CreateTransactionResponse = {
+  data: { transaction: Transaction | null };
+  error?: string;
+};
+
+export type UpdateTransactionByIdResponse = {
+  data: { transaction: Transaction | null };
+  error?: string;
+};
+
+export type DeleteTransactionByIdResponse = {
+  data: { transaction: Transaction | null };
+  error?: string;
+};
