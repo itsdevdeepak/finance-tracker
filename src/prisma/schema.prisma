@@ -28,6 +28,7 @@ model Transaction {
   recurringBillId String?
   recurringBill   RecurringBill? @relation(fields: [recurringBillId], references: [id], onDelete: SetNull)
 
+  @@unique([userId, name, date, category, amount])
   @@index([userId])
   @@map("transaction")
 }

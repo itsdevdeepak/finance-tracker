@@ -8,6 +8,8 @@ import IconLogo from "../icons/IconLogo";
 import NavLinks from "./NavLinks";
 import styles from "./navigation.module.css";
 import IconExpandMenu from "../icons/IconExpandMenu";
+import { logout } from "@/features/auth/actions";
+import IconLogout from "../icons/IconLogout";
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -20,6 +22,12 @@ export default function Sidebar() {
       <nav aria-label="Main Navigation">
         <NavLinks />
       </nav>
+      <NavItem
+        type="button"
+        label="Logout"
+        onClick={async () => await logout()}
+        Icon={IconLogout}
+      />
       <NavItem
         type="button"
         label={isCollapsed ? "Expand Menu" : "Minimize Menu"}
