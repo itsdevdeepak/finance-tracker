@@ -2,12 +2,12 @@ import { getTransactionById } from "../service";
 import { transactionFormAction } from "../action";
 import { EditForm } from "../constants";
 import TransactionForm from "./TransactionForm";
-import TransactionNotFound from "./TransactionNotFound";
+import { notFound } from "next/navigation";
 
 export default async function EditTransactionView({ id }: { id: string }) {
   const { data, error } = await getTransactionById(id);
 
-  if (!data.transaction || error) return <TransactionNotFound />;
+  if (!data.transaction || error) return notFound();
 
   return (
     <TransactionForm

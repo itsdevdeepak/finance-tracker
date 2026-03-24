@@ -1,7 +1,7 @@
+import { notFound } from "next/navigation";
 import { potSavingFormAction } from "../actions";
 import { AddToPot, WithdrawPot } from "../constants";
 import { getPotById } from "../service";
-import PotNotFound from "./PotNotFound";
 import SavingForm from "./SavingForm";
 
 export default async function SavingFormView({
@@ -22,7 +22,7 @@ export default async function SavingFormView({
     description = WithdrawPot.description;
   }
 
-  if (!data.pot) return <PotNotFound />;
+  if (!data.pot) return notFound();
 
   return (
     <SavingForm
