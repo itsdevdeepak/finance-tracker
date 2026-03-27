@@ -2,7 +2,6 @@
 
 import { useActionState } from "react";
 import DialogCard from "@/components/ui/DialogCard";
-import TextInput from "@/components/ui/form/TextInput";
 import Select from "@/components/ui/form/Select";
 import IconDollar from "@/components/icons/IconDollar";
 import { RecurringBill } from "../types";
@@ -11,6 +10,7 @@ import { FormAction } from "@/components/ui/form/types";
 import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
 import Form from "@/components/ui/form/Form";
 import SubmitButton from "@/components/ui/form/SubmitButton";
+import InputField from "@/components/ui/form/InputField";
 
 export default function RecurringBillForm({
 	heading,
@@ -55,7 +55,7 @@ export default function RecurringBillForm({
 				fieldNames={Object.keys(defaultValues)}
 			>
 				<input type="hidden" name="id" value={initialData?.id} />
-				<TextInput
+				<InputField
 					autoFocus={true}
 					defaultValue={defaultValues?.name}
 					label="Recurring Bill Name"
@@ -64,7 +64,7 @@ export default function RecurringBillForm({
 					error={state.fieldErrors.name}
 					helperText="Max 30 characters"
 				/>
-				<TextInput
+				<InputField
 					type="number"
 					defaultValue={defaultValues?.amount}
 					label="Amount"
@@ -73,7 +73,7 @@ export default function RecurringBillForm({
 					placeholder="e.g. 2000"
 					IconLeft={IconDollar}
 				/>
-				<TextInput
+				<InputField
 					type="number"
 					defaultValue={defaultValues?.dueDate}
 					label="Due Day of Month"

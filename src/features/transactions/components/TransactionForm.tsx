@@ -3,7 +3,6 @@
 import DialogCard from "@/components/ui/DialogCard";
 import { Transaction } from "../types";
 import { useActionState } from "react";
-import TextInput from "@/components/ui/form/TextInput";
 import Select from "@/components/ui/form/Select";
 import IconDollar from "@/components/icons/IconDollar";
 import { FormAction } from "@/components/ui/form/types";
@@ -11,6 +10,7 @@ import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
 import Form from "@/components/ui/form/Form";
 import SubmitButton from "@/components/ui/form/SubmitButton";
 import { CATEGORIES } from "@/constants/transaction";
+import InputField from "@/components/ui/form/InputField";
 
 export default function TransactionForm({
 	heading,
@@ -56,7 +56,7 @@ export default function TransactionForm({
 				fieldNames={Object.keys(defaultValues)}
 			>
 				<input type="hidden" name="id" value={initialData?.id} />
-				<TextInput
+				<InputField
 					autoFocus={true}
 					label="Transaction Name"
 					name="name"
@@ -65,7 +65,7 @@ export default function TransactionForm({
 					defaultValue={defaultValues.name}
 					error={state.fieldErrors?.name}
 				/>
-				<TextInput
+				<InputField
 					type="number"
 					label="Amount"
 					name="amount"
@@ -74,8 +74,8 @@ export default function TransactionForm({
 					error={state.fieldErrors?.amount}
 					IconLeft={IconDollar}
 				/>
-				<TextInput
-					type="text"
+				<InputField
+					type="date"
 					label="Date"
 					name="date"
 					placeholder="e.g. 2026/02/13"

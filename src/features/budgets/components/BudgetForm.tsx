@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 import DialogCard from "@/components/ui/DialogCard";
 import ColorSelect from "@/components/ui/form/ColorSelect";
-import TextInput from "@/components/ui/form/TextInput";
 import { Budget } from "../types";
 import Select from "@/components/ui/form/Select";
 import IconDollar from "@/components/icons/IconDollar";
@@ -12,6 +11,7 @@ import { FormAction } from "@/components/ui/form/types";
 import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
 import SubmitButton from "@/components/ui/form/SubmitButton";
 import Form from "@/components/ui/form/Form";
+import InputField from "@/components/ui/form/InputField";
 
 export default function BudgetForm({
 	heading,
@@ -60,7 +60,7 @@ export default function BudgetForm({
 						defaultValue={defaultValues?.category}
 						options={CategorySelectOptions}
 					/>
-					<TextInput
+					<InputField
 						type="number"
 						name="maximum"
 						label="Maximum Spend"

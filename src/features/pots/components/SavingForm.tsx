@@ -4,13 +4,13 @@ import { useActionState, useState } from "react";
 import { Pot } from "../types";
 import { formatCurrency } from "@/lib/utils/format";
 import ProgressBar from "./ProgressBar";
-import TextInput from "@/components/ui/form/TextInput";
 import IconDollar from "@/components/icons/IconDollar";
 import DialogCard from "@/components/ui/DialogCard";
 import { FormAction } from "@/components/ui/form/types";
 import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
 import Form from "@/components/ui/form/Form";
 import SubmitButton from "@/components/ui/form/SubmitButton";
+import InputField from "@/components/ui/form/InputField";
 
 function AmountPreview({
 	isWithdrawing,
@@ -119,7 +119,7 @@ export default function SavingForm({
 					total={pot.total}
 					newAmount={amount}
 				/>
-				<TextInput
+				<InputField
 					type="number"
 					autoFocus={true}
 					label={`Amount to ${isWithdrawing ? "Withdraw" : "Add"}`}
