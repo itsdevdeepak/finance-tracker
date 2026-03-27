@@ -1,52 +1,50 @@
 "use client";
 
-import { ChangeEvent, useActionState, useState } from "react";
+import { useActionState } from "react";
 import { loginFormAction } from "../actions";
 import DialogCard from "@/components/ui/DialogCard";
 import Link from "next/link";
 import InputField from "@/components/ui/form/InputField";
 import { signupPath } from "@/constants/paths";
+import Form from "@/components/ui/form/Form";
+import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
+import SubmitButton from "@/components/ui/form/SubmitButton";
 
 export default function LoginForm() {
-	const [formValues, setFormValues] = useState({ email: "", password: "" });
+	const [state, formAction, isPending] = useActionState(
+		loginFormAction,
+		EMPTY_ACTION_STATE,
+	);
 
-	const [state, formAction, isPending] = useActionState(loginFormAction, {
-		success: false,
-	});
-
-	const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = event.target;
-
-		setFormValues((prev) => ({
-			...prev,
-			[name]: value,
-		}));
+	const defaultValues = {
+		email: (state.payload?.get("email") as string | null) || "",
+		password: (state.payload?.get("password") as string | null) || "",
 	};
 
 	return (
-		<DialogCard heading="Login" description="" error={state.errors?.other}>
-			<form className="flow-base" action={formAction}>
+		<DialogCard heading="Login" description="">
+			<Form
+				action={formAction}
+				actionState={state}
+				fieldNames={Object.keys(defaultValues)}
+			>
 				<InputField
 					name="email"
 					type="email"
 					label="Email"
 					placeholder="user@example.com"
-					value={formValues.email}
-					onChange={handleInputChange}
-					error={state.errors?.email}
+					defaultValue={defaultValues.email}
+					error={state.fieldErrors?.email}
 				/>
 				<InputField
 					name="password"
 					type="password"
 					label="Password"
-					value={formValues.password}
-					onChange={handleInputChange}
-					error={state.errors?.password}
+					defaultValue={defaultValues.password}
+					error={state.fieldErrors?.password}
 					placeholder="&#11044;&#11044;&#11044;&#11044;&#11044;&#11044;&#11044;"
 				/>
-				<button disabled={isPending} className="w-full button" type="submit">
-					{isPending ? "Logging in..." : "Login"}
-				</button>
+				<SubmitButton label={isPending ? "Logging in..." : "Login"} />
 				<p className="text-sm text-gray text-center">
 					Need to create an account?
 					<Link
@@ -56,7 +54,7 @@ export default function LoginForm() {
 						Sign Up
 					</Link>
 				</p>
-			</form>
+			</Form>
 		</DialogCard>
 	);
 }

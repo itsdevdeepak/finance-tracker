@@ -1,5 +1,6 @@
 "use server";
 
+import { fromErrorToActionState } from "@/components/ui/form/utils";
 import { auth } from "@/lib/auth";
 import {
   validateCurrencyCode,
@@ -8,66 +9,55 @@ import {
   validateString,
 } from "@/lib/utils/validation";
 import { headers } from "next/headers";
-
-export type LoginFormState = {
-  success: boolean;
-  errors?: {
-    email?: string
-    password?: string
-    other?: string;
-  };
-};
-
-
+import { AUTH_ERRORS } from "./constants";
+import { ActionState } from "@/components/ui/form/types";
+import { setCookieByKey } from "@/actions/cookies";
+import { redirect } from "next/navigation";
+import { loginPath } from "@/constants/paths";
 
 export async function loginFormAction(
-  _prevState: LoginFormState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<LoginFormState> {
+): Promise<ActionState> {
   try {
     const email = validateEmail(formData.get("email"));
     const password = validatePassword(formData.get("password"), {
       minLength: 8,
     });
 
+    const fieldErrors: ActionState["fieldErrors"] = {};
+
     if (!email) {
-      return { success: false, errors: { email: "Invalid email address" } };
+      fieldErrors.email = "Invalid email address";
     }
 
     if (!password) {
-      return {
-        success: false,
-        errors: { password: "Password should be at least 8 characters" },
-      };
+      fieldErrors.password = "Password should be at least 8 characters";
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      return fromErrorToActionState(fieldErrors, formData, { isValidationError: true });
     }
 
     await auth.api.signInEmail({
-      body: { email, password },
+      headers: await headers(),
+      body: {
+        email: email as string,
+        password: password as string
+      },
     });
 
-    return { success: true };
+    await setCookieByKey("toast", "Logged in successfully.");
   } catch (error) {
-    if (error instanceof Error) {
-      return { success: false, errors: { other: error.message } };
-    } else {
-      console.error(error);
-      return { success: false, errors: { other: "Failed to Login" } };
-    }
+    console.error("signin", error);
+    return fromErrorToActionState(AUTH_ERRORS.LOGIN_FAILED, formData);
   }
+
+  redirect("/");
 }
 
-export type SignupFormState = {
-  success: boolean;
-  errors?: {
-    name?: string;
-    email?: string;
-    password?: string;
-    other?: string;
-  };
-};
-
-export async function signUpFormAction(_prevState: SignupFormState,
-  formData: FormData,): Promise<SignupFormState> {
+export async function signUpFormAction(_prevState: ActionState,
+  formData: FormData): Promise<ActionState> {
   try {
     const name = validateString(formData.get("name"), { minLength: 2 });
     const email = validateEmail(formData.get("email"));
@@ -76,28 +66,26 @@ export async function signUpFormAction(_prevState: SignupFormState,
     });
     const currencyCode = validateCurrencyCode(formData.get("currencyCode"));
 
-    const errors: Record<string, string> = {};
+    const fieldErrors: ActionState["fieldErrors"] = {};
 
     if (!name) {
-      errors.name = "Name should be at least 2 character long ";
+      fieldErrors.name = "Name should be at least 2 character long ";
     }
 
     if (!email) {
-      errors.email = "Invalid email address";
+      fieldErrors.email = "Invalid email address";
     }
 
     if (!password) {
-      errors.password = "Password should be at least 8 characters";
+      fieldErrors.password = "Password should be at least 8 characters";
     }
 
-    if (Object.keys(errors).length > 0) {
-      return {
-        success: false,
-        errors: errors,
-      };
+    if (Object.keys(fieldErrors).length > 0) {
+      return fromErrorToActionState(fieldErrors, formData, { isValidationError: true });
     }
 
     await auth.api.signUpEmail({
+      headers: await headers(),
       body: {
         name: name as string,
         email: email as string,
@@ -106,23 +94,26 @@ export async function signUpFormAction(_prevState: SignupFormState,
       },
     });
 
-    return { success: true };
+    await setCookieByKey("toast", "Account created successfully.");
+
   } catch (error) {
-    if (error instanceof Error) {
-      return { success: false, errors: { other: error.message } };
-    } else {
-      console.error(error);
-      return { success: false, errors: { other: "Failed to SignUp" } };
-    }
+    console.error("signup", error);
+    return fromErrorToActionState(AUTH_ERRORS.SIGNUP_FAILED, formData);
   }
+
+  redirect("/");
 }
 
 
 export async function logout() {
   try {
-    await auth.api.signOut({ headers: await headers() })
+    await auth.api.signOut({ headers: await headers() });
+
+    await setCookieByKey("toast", "Logged out successfully.");
   } catch (error) {
-    console.error(error)
-    throw new Error("Failed to Logout")
+    console.error("logout", error);
+    return fromErrorToActionState(AUTH_ERRORS.LOGIN_FAILED);
   }
+
+  redirect(loginPath());
 }

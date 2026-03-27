@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useActionState, useState } from "react";
+import { useActionState } from "react";
 import { signUpFormAction } from "../actions";
 import DialogCard from "@/components/ui/DialogCard";
 import { CurrencyCodes } from "@/constants/currency";
@@ -8,73 +8,64 @@ import Select from "@/components/ui/form/Select";
 import Link from "next/link";
 import InputField from "@/components/ui/form/InputField";
 import { loginPath } from "@/constants/paths";
+import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
+import Form from "@/components/ui/form/Form";
+import SubmitButton from "@/components/ui/form/SubmitButton";
 
 export default function SignupForm() {
-	const [formValues, setFormValues] = useState({
-		name: "",
-		email: "",
-		password: "",
-		currencyCode: "USD" satisfies (typeof CurrencyCodes)[number],
-	});
+	const [state, formAction, isPending] = useActionState(
+		signUpFormAction,
+		EMPTY_ACTION_STATE,
+	);
 
-	const [state, formAction, isPending] = useActionState(signUpFormAction, {
-		success: false,
-	});
-
-	const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = event.target;
-
-		setFormValues((prev) => ({
-			...prev,
-			[name]: value,
-		}));
+	const defaultValues = {
+		name: (state.payload?.get("name") as string | null) || "",
+		email: (state.payload?.get("email") as string | null) || "",
+		password: (state.payload?.get("password") as string | null) || "",
+		currencyCode: (state.payload?.get("v") as string | null) || "",
 	};
 
 	return (
-		<DialogCard heading="Sign up" description="" error={state.errors?.other}>
-			<form className="flow-base" action={formAction}>
+		<DialogCard heading="Sign up" description="">
+			<Form
+				className="flow-base"
+				action={formAction}
+				actionState={state}
+				fieldNames={Object.keys(defaultValues)}
+			>
 				<InputField
 					name="name"
 					type="text"
 					label="Name"
 					placeholder="e.g Jimmy"
-					value={formValues.name}
-					onChange={handleInputChange}
-					error={state.errors?.name}
+					defaultValue={defaultValues.name}
+					error={state.fieldErrors?.name}
 				/>
 				<InputField
 					name="email"
 					type="email"
 					label="Email"
 					placeholder="user@example.com"
-					value={formValues.email}
-					onChange={handleInputChange}
-					error={state.errors?.email}
+					defaultValue={defaultValues.email}
+					error={state.fieldErrors?.email}
 				/>
 				<InputField
 					name="password"
 					type="password"
 					label="Password"
-					value={formValues.password}
-					onChange={handleInputChange}
-					error={state.errors?.password}
+					defaultValue={defaultValues.password}
+					error={state.fieldErrors?.password}
 					placeholder="&#11044;&#11044;&#11044;&#11044;&#11044;&#11044;&#11044;"
 				/>
 				<Select
 					name="currencyCode"
 					label="Currency Code"
+					defaultValue={defaultValues.currencyCode}
 					options={CurrencyCodes.map((code) => ({ value: code }))}
-					onChange={(option) =>
-						setFormValues((values) => ({
-							...values,
-							currencyCode: option.value,
-						}))
-					}
 				/>
-				<button disabled={isPending} className="w-full button" type="submit">
-					{isPending ? "Creating user..." : "Create New User"}
-				</button>
-
+				<SubmitButton
+					label={isPending ? "Creating user..." : "Create New User"}
+				/>
 				<p className="text-sm text-gray text-center">
 					Already have an account?
 					<Link
@@ -84,7 +75,7 @@ export default function SignupForm() {
 						Login
 					</Link>
 				</p>
-			</form>
+			</Form>
 		</DialogCard>
 	);
 }
