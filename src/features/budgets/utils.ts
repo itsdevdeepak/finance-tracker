@@ -1,4 +1,4 @@
-import { categories } from "@/constants/transaction";
+import { CATEGORIES } from "@/constants/transaction";
 import { getColorByName } from "@/lib/utils/colors";
 import { validateNumber, validateString } from "@/lib/utils/validation";
 import { Budget } from "./types";
@@ -9,7 +9,7 @@ export function validateCategory(rawCategory: unknown) {
   const category = validateString(rawCategory, { minLength: 3 });
   if (!category) return null;
   return (
-    categories.find(
+    CATEGORIES.find(
       (value) => value.toLowerCase() === category.toLowerCase(),
     ) ?? null
   );

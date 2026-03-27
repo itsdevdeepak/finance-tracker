@@ -1,3 +1,5 @@
+import { CATEGORIES } from "@/constants/transaction";
+
 export const SortingSelectOptions = [
   "Latest",
   "Oldest",
@@ -7,18 +9,9 @@ export const SortingSelectOptions = [
   "Lowest",
 ] as const;
 
-export const categorySelectOptions = [
+export const CategorySelectOptions = [
   "All Transactions",
-  "Entertainment",
-  "Bills",
-  "Groceries",
-  "Dining Out",
-  "Transportation",
-  "Personal Care",
-  "Education",
-  "Lifestyle",
-  "Shopping",
-  "General",
+  ...CATEGORIES
 ] as const;
 
 
@@ -37,3 +30,15 @@ export const DeleteTransaction = {
   description:
     "Are you sure you want to delete this transaction? This action cannot be reversed, and all the data inside it will be removed forever.",
 };
+
+export const TRANSACTION_ERROR_MESSAGES = {
+  NOT_FOUND: "Transaction not found.",
+  DUPLICATE: "A transaction with the same details already exists.",
+  INVALID_ID: "Invalid transaction id.",
+  CREATE_FAILED: "Failed to create transaction. Please try again later.",
+  UPDATE_FAILED: "Failed to update transaction. Please try again later.",
+  DELETE_FAILED: "Failed to delete transaction. Please try again later.",
+  FETCH_BY_ID_FAILED: "Failed to get transaction. Please try again later.",
+  FETCH_ALL_FAILED: "Failed to get transactions. Please try again later.",
+  UNEXPECTED: "Unexpected error. Please try again later.",
+} as const;

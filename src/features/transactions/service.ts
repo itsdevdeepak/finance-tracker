@@ -9,12 +9,13 @@ import {
 } from "./types";
 import {
   getOrderBy,
+  isValidCategoryOption,
 } from "./utils";
 import { verifySession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import { TransactionWhereInput } from "@/generated/prisma/models";
-import { categories } from "@/constants/transaction";
 import { getQueryConfig } from "@/lib/utils/prisma";
+import { TRANSACTION_ERROR_MESSAGES } from "./constants";
 
 const omitProperties = {
   updatedAt: true,
@@ -39,7 +40,7 @@ export async function getTransactions({
     const safePage = Number.isInteger(page) && page > 0 ? page : 1;
     const safeMonth = month && month >= 1 && month <= 12 ? month : undefined;
 
-    if (category && categories.includes(category)) {
+    if (category && isValidCategoryOption(category)) {
       filters.push({
         category: {
           equals: category,
@@ -62,7 +63,7 @@ export async function getTransactions({
     if (query) {
       const searchableFields = getQueryConfig<Transaction>(query, [
         { name: "name" }, { name: "category" }, { name: "amount", isNumber: true },
-      ])
+      ]);
 
       filters.push({ OR: searchableFields });
     }
@@ -114,8 +115,8 @@ export async function getTransactions({
       },
     };
   } catch (error) {
-    console.error("failed getting transaction data", error);
-    return { data: [], error: "failed getting transaction data" };
+    console.error(TRANSACTION_ERROR_MESSAGES.FETCH_ALL_FAILED, error);
+    return { data: [], error: TRANSACTION_ERROR_MESSAGES.FETCH_ALL_FAILED };
   }
 }
 
@@ -130,16 +131,16 @@ export async function getTransactionById(id: string): Promise<GetTransactionById
         userId: session.userId
       },
       omit: omitProperties
-    })
+    });
 
     return { data: { transaction } };
   } catch (error) {
-    console.error("failed getting transaction data", error);
+    console.error(TRANSACTION_ERROR_MESSAGES.FETCH_BY_ID_FAILED, error);
     return {
       data: {
         transaction: null,
       },
-      error: "failed getting transaction data",
+      error: TRANSACTION_ERROR_MESSAGES.FETCH_BY_ID_FAILED
     };
   }
 }
@@ -161,20 +162,25 @@ export async function createTransaction(transactionData: Omit<Transaction, "id" 
       }
     });
 
-    if (existingTransaction && existingTransaction.userId !== session.userId) {
-      throw new Error(`Pot with same date already exist`);
+    if (existingTransaction) {
+      throw new Error(TRANSACTION_ERROR_MESSAGES.DUPLICATE);
     }
 
     const newTransaction = await prisma.transaction.create({
       data: { ...transactionData, avatar: transactionData.avatar || null, userId: session.userId },
       omit: omitProperties
-    })
+    });
 
-    return { data: { transaction: newTransaction } }
+    return { data: { transaction: newTransaction } };
 
   } catch (error) {
-    console.error("failed create transaction", error);
-    return { data: { transaction: null }, error: "failed create transaction data" };
+    console.error(TRANSACTION_ERROR_MESSAGES.CREATE_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { transaction: null }, error: error.message };
+    }
+
+    return { data: { transaction: null }, error: TRANSACTION_ERROR_MESSAGES.CREATE_FAILED };
   }
 }
 
@@ -190,8 +196,8 @@ export async function updateTransactionById(id: string, updatedFields: Partial<O
       }
     });
 
-    if (existingTransaction && existingTransaction.userId !== session.userId) {
-      throw new Error(`Pot with id: ${id} already exist`);
+    if (!existingTransaction) {
+      throw new Error(TRANSACTION_ERROR_MESSAGES.INVALID_ID);
     }
 
     const updatedTransaction = await prisma.transaction.update({
@@ -201,16 +207,17 @@ export async function updateTransactionById(id: string, updatedFields: Partial<O
       },
       data: updatedFields,
       omit: omitProperties
-    })
+    });
 
-    return { data: { transaction: updatedTransaction } }
+    return { data: { transaction: updatedTransaction } };
 
   } catch (error) {
+    console.error(TRANSACTION_ERROR_MESSAGES.UPDATE_FAILED, error);
+
     if (error instanceof Error) {
       return { data: { transaction: null }, error: error.message };
     }
-    console.error("failed update transaction", error);
-    return { data: { transaction: null }, error: "failed update transaction" };
+    return { data: { transaction: null }, error: TRANSACTION_ERROR_MESSAGES.UPDATE_FAILED };
   }
 }
 
@@ -226,8 +233,8 @@ export async function deleteTransactionById(id: string): Promise<DeleteTransacti
       }
     });
 
-    if (existingTransaction && existingTransaction.userId !== session.userId) {
-      throw new Error(`Pot with id: ${id} already exist`);
+    if (!existingTransaction) {
+      throw new Error(TRANSACTION_ERROR_MESSAGES.INVALID_ID);
     }
 
     const deletedTransaction = await prisma.transaction.delete({
@@ -236,12 +243,16 @@ export async function deleteTransactionById(id: string): Promise<DeleteTransacti
         userId: session.userId,
       },
       omit: omitProperties
-    })
+    });
 
-    return { data: { transaction: deletedTransaction } }
+    return { data: { transaction: deletedTransaction } };
 
   } catch (error) {
-    console.error("failed to delete transaction", error);
-    return { data: { transaction: null }, error: "failed to delete transaction" };
+    console.error(TRANSACTION_ERROR_MESSAGES.DELETE_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { transaction: null }, error: error.message };
+    }
+    return { data: { transaction: null }, error: TRANSACTION_ERROR_MESSAGES.DELETE_FAILED };
   }
 }

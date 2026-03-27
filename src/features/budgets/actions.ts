@@ -1,43 +1,37 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Budget } from "./types";
 import { validateCategory, validateMaximumSpent, validateTheme } from "./utils";
 import { createBudget, deleteBudgetById, updateBudgetById } from "./service";
-
-export type BudgetFormState = {
-  success: boolean;
-  errors?: {
-    category?: string;
-    maximum?: string;
-    theme?: string;
-    other?: string;
-  };
-  data?: Budget;
-};
+import { ActionState } from "@/components/ui/form/types";
+import { fromErrorToActionState } from "@/components/ui/form/utils";
+import { BUDGET_ERROR_MESSAGES } from "./constants";
+import { redirect } from "next/navigation";
+import { setCookieByKey } from "@/actions/cookies";
+import { budgetsPath } from "@/constants/paths";
 
 export async function budgetFormAction(
-  prevState: BudgetFormState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<BudgetFormState> {
-  const id = prevState.data?.id;
+): Promise<ActionState> {
 
+  const id = formData.get("id") as string | null;
   const category = validateCategory(formData.get("category"));
   const maximum = validateMaximumSpent(formData.get("maximum"));
   const theme = validateTheme(formData.get("theme"));
 
-  const errors: BudgetFormState["errors"] = {};
+  const fieldErrors: ActionState["fieldErrors"] = {};
 
-  if (!category) errors.category = "Please select a valid Category";
-  if (!maximum) errors.maximum = "Amount must be a positive number";
-  if (!theme) errors.theme = "Please select a valid theme";
+  if (!category) fieldErrors.category = "Please select a valid Category";
+  if (!maximum) fieldErrors.maximum = "Amount must be a positive number";
+  if (!theme) fieldErrors.theme = "Please select a valid theme";
 
-  if (Object.keys(errors).length > 0) {
-    return { success: false, errors };
+  if (Object.keys(fieldErrors).length > 0) {
+    return fromErrorToActionState(fieldErrors, formData, { isValidationError: true });
   }
 
   if (id) {
-    const { data, error } = await updateBudgetById({
+    const { error } = await updateBudgetById({
       id,
       updatedFields: {
         category: category as string,
@@ -46,54 +40,48 @@ export async function budgetFormAction(
       },
     });
 
-    if (error || !data.budget) {
-      return {
-        success: false,
-        errors: { other: "Failed to update Budget. Please try again!" },
-      };
+    if (error) {
+      return fromErrorToActionState(error || BUDGET_ERROR_MESSAGES.UPDATE_FAILED);
     }
 
-    revalidatePath(`/budget`);
-    revalidatePath(`/budget/${id}`);
+    revalidatePath(budgetsPath());
 
-    return { success: true, data: data.budget };
+    await setCookieByKey("toast", "Budget updated");
+
+  } else {
+    const { error } = await createBudget({
+      category: category as string,
+      maximum: maximum as number,
+      theme: theme as string,
+    });
+
+    if (error) {
+      return fromErrorToActionState(error || BUDGET_ERROR_MESSAGES.CREATE_FAILED, formData);
+    }
+
+    revalidatePath(budgetsPath());
+
+    await setCookieByKey("toast", "Budget created");
   }
 
-  const { data, error } = await createBudget({
-    category: category as string,
-    maximum: maximum as number,
-    theme: theme as string,
-  });
-
-  if (error)
-    return {
-      success: false,
-      errors: { other: "Failed to create Budget. Please try again!" },
-    };
-
-  revalidatePath("/budget");
-  return { success: true, data: data.budget as Budget };
+  redirect(budgetsPath());
 }
 
-export type DeleteBudgetActionState = {
-  success: boolean;
-  error?: string;
-  data?: Budget;
-};
-
 export async function deleteBudget(
-  id: string,
-): Promise<DeleteBudgetActionState> {
-  const { error, data } = await deleteBudgetById(id);
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = (formData.get("id") as string) || "";
 
-  if (error || !data.budget)
-    return {
-      success: false,
-      error: "Failed to delete Budget. Please try again! or Try going back.",
-    };
+  const { error } = await deleteBudgetById(id);
 
-  revalidatePath(`/budget`);
-  revalidatePath(`/budget/${data.budget.id}`);
+  if (error) {
+    return fromErrorToActionState(BUDGET_ERROR_MESSAGES.DELETE_FAILED);
+  }
 
-  return { success: true, data: data.budget };
+  revalidatePath(budgetsPath());
+
+  await setCookieByKey("toast", "Budget deleted");
+
+  redirect(budgetsPath());
 }

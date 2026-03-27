@@ -9,119 +9,96 @@ import {
   validateTotal,
 } from "./utils";
 import { Pot } from "./types";
-
-export type PotFormState = {
-  success: boolean;
-  errors?: {
-    name?: string;
-    target?: string;
-    theme?: string;
-    other?: string;
-  };
-  data?: Pot;
-};
-
-export type PotSavingFormState = {
-  success: boolean;
-  errors?: {
-    total?: string;
-    other?: string;
-  };
-
-  data?: Pot;
-};
+import { ActionState } from "@/components/ui/form/types";
+import { fromErrorToActionState } from "@/components/ui/form/utils";
+import { POT_ERROR_MESSAGES } from "./constants";
+import { setCookieByKey } from "@/actions/cookies";
+import { redirect } from "next/navigation";
+import { potsPath } from "@/constants/paths";
 
 export async function potSavingFormAction(
-  prevState: PotSavingFormState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<PotSavingFormState> {
-  if (!prevState.data)
-    return {
-      success: false,
-      errors: { other: "Failed to update pot. Please try again" },
-    };
+): Promise<ActionState> {
+  const id = formData.get("id") as string | null;
+  const target = validateTarget(formData.get("target"));
 
-  const id = prevState.data.id;
-
-  const total = validateTotal(formData.get("total"), prevState.data.target);
-
-  if (!total) {
-    return {
-      success: false,
-      errors: {
-        total: "Amount must be positive and cannot exceed target amount",
-      },
-    };
+  if (!target) {
+    return fromErrorToActionState("Target was not provided", formData, { isValidationError: true });
   }
 
-  const { data, error } = await updatePotById(id, { total });
-  if (error || !data.pot)
-    return {
-      success: false,
-      errors: { other: "Failed to update pot. Please try again" },
-    };
+  const total = validateTotal(formData.get("total"), target);
 
-  revalidatePath(`/pots`);
-  revalidatePath(`/pots/${id}`);
+  if (!total) {
+    return fromErrorToActionState("Amount must be positive and cannot exceed target amount", formData, { isValidationError: true });
+  }
 
-  return { success: true, data: data.pot };
+
+  const { error } = await updatePotById(id || "", { total });
+
+  if (error) {
+    return fromErrorToActionState(error || POT_ERROR_MESSAGES.UPDATE_FAILED, formData);
+  }
+
+  revalidatePath(potsPath());
+
+  await setCookieByKey("toast", "Pot updated");
+
+  redirect(potsPath());
 }
 
 export async function potFormAction(
-  prevState: PotFormState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<PotFormState> {
-  const id = prevState.data?.id;
+): Promise<ActionState> {
 
+  const id = formData.get("id") as string | null;
   const name = validateName(formData.get("name"));
   const target = validateTarget(formData.get("target"));
   const theme = validateTheme(formData.get("theme"));
 
-  const errors: PotFormState["errors"] = {};
+  const fieldErrors: ActionState["fieldErrors"] = {};
 
-  if (!name) errors.name = "Name must be between 1 and 30 characters";
-  if (!target) errors.target = "Target must be a positive number";
-  if (!theme) errors.theme = "Please select a valid theme";
+  if (!name) fieldErrors.name = "Name must be between 1 and 30 characters";
+  if (!target) fieldErrors.target = "Target must be a positive number";
+  if (!theme) fieldErrors.theme = "Please select a valid theme";
 
-  if (Object.keys(errors).length > 0) {
-    return { success: false, errors };
+  if (Object.keys(fieldErrors).length > 0) {
+    return fromErrorToActionState(fieldErrors, formData, { isValidationError: true });
   }
 
   if (id) {
-    const { data, error } = await updatePotById(id, {
+    const { error } = await updatePotById(id, {
       name: name as string,
       target: target as number,
       theme: theme as string,
     });
 
-    if (error || !data.pot) {
-      return {
-        success: false,
-        errors: { other: "Failed to update pot. Please try again!" },
-      };
+    if (error) {
+      return fromErrorToActionState(error || POT_ERROR_MESSAGES.UPDATE_FAILED, formData);
     }
 
-    revalidatePath(`/pots`);
-    revalidatePath(`/pots/${id}`);
+    revalidatePath(potsPath());
+    await setCookieByKey("toast", "Pot updated");
 
-    return { success: true, data: data.pot };
+  } else {
+    const { error } = await createNewPot({
+      name: name as string,
+      target: target as number,
+      theme: theme as string,
+      total: 0,
+    });
+
+    if (error) {
+      return fromErrorToActionState(error || POT_ERROR_MESSAGES.CREATE_FAILED, formData);
+    }
+
+    revalidatePath(potsPath());
+
+    await setCookieByKey("toast", "Pot created");
   }
 
-  const { data, error } = await createNewPot({
-    name: name as string,
-    target: target as number,
-    theme: theme as string,
-    total: 0,
-  });
-
-  if (error)
-    return {
-      success: false,
-      errors: { other: "Failed to create pot. Please try again!" },
-    };
-
-  revalidatePath("/pots");
-  return { success: true, data: data.pot as Pot };
+  redirect(potsPath());
 }
 
 export type DeletePotActionState = {
@@ -130,17 +107,18 @@ export type DeletePotActionState = {
   data?: Pot;
 };
 
-export async function deletePot(id: string): Promise<DeletePotActionState> {
-  const { error, data } = await deletePotById(id);
+export async function deletePot(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const id = (formData.get("id") as string) || "";
 
-  if (error || !data.pot)
-    return {
-      success: false,
-      error: "Failed to delete pot. Please try again! or Try going back.",
-    };
+  const { error } = await deletePotById(id);
 
-  revalidatePath(`/pots`);
-  revalidatePath(`/pots/${data.pot.id}`);
+  if (error) {
+    return fromErrorToActionState(error || POT_ERROR_MESSAGES.DELETE_FAILED, formData);
+  }
 
-  return { success: true, data: data.pot };
+  revalidatePath(potsPath());
+
+  await setCookieByKey("toast", "Pot deleted");
+
+  redirect(potsPath());
 }

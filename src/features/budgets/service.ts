@@ -10,17 +10,18 @@ import {
 import { verifySession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import { getMonthRange } from "@/lib/utils/prisma";
+import { BUDGET_ERROR_MESSAGES } from "./constants";
 
 const omitBudgetProperties = {
   createdAt: true,
   updatedAt: true,
   userId: true,
-}
+};
 
 type TX = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 async function getSpentAmount(tx: TX, userId: string, category: string) {
-  const currentMonthRange = getMonthRange(new Date())
+  const currentMonthRange = getMonthRange(new Date());
 
   const aggregate = await tx.transaction.aggregate({
     _sum: { amount: true },
@@ -42,7 +43,7 @@ export async function getBudgets(): Promise<GetBudgetResponse> {
   if (!session.isAuth) throw new Error("Unauthorized");
 
   try {
-    const currentMonthRange = getMonthRange(new Date())
+    const currentMonthRange = getMonthRange(new Date());
 
     const budgets = await prisma.$transaction(async (tx) => {
 
@@ -71,20 +72,21 @@ export async function getBudgets(): Promise<GetBudgetResponse> {
       for (let i = 0; i < budgets.length; i++) {
         const budgetData = budgets[i];
         const spent = spendingByCategory.find(spending => spending.category === budgetData.category)?._sum.amount || 0;
-        merged.push({ ...budgetData, spent: Math.abs(spent) })
+        merged.push({ ...budgetData, spent: Math.abs(spent) });
       }
 
-      return merged
+      return merged;
     });
 
     return { data: { budgets } };
   } catch (error) {
-    console.error("failed to get Budgets data", error);
+    console.error(BUDGET_ERROR_MESSAGES.FETCH_ALL_FAILED, error);
+
     return {
       data: {
         budgets: [],
       },
-      error: "failed to get Budgets data",
+      error: BUDGET_ERROR_MESSAGES.FETCH_ALL_FAILED,
     };
   }
 }
@@ -109,17 +111,22 @@ export async function getBudgetById(
 
       const spent = await getSpentAmount(tx, session.userId, budget.category);
 
-      return { ...budget, spent }
-    })
+      return { ...budget, spent };
+    });
 
     return { data: { budget } };
   } catch (error) {
-    console.error("failed update budget", error);
+    console.error(BUDGET_ERROR_MESSAGES.FETCH_BY_ID_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { budget: null }, error: error.message };
+    }
+
     return {
       data: {
         budget: null,
       },
-      error: "failed to update budget",
+      error: BUDGET_ERROR_MESSAGES.FETCH_BY_ID_FAILED,
     };
   }
 }
@@ -136,7 +143,7 @@ export async function createBudget({
     const today = new Date();
 
     const budget = await prisma.$transaction(async (tx) => {
-      const budgetResult = await tx.budget.findUnique({
+      const existingBudget = await tx.budget.findUnique({
         where: {
           category_userId: {
             category,
@@ -145,11 +152,11 @@ export async function createBudget({
         }
       });
 
-      if (budgetResult) {
-        throw new Error(`Budget with category:${category} already exist`);
+      if (existingBudget) {
+        throw new Error(BUDGET_ERROR_MESSAGES.DUPLICATE);
       }
 
-      const budget = await tx.budget.create({
+      const newBudget = await tx.budget.create({
         data: {
           category,
           maximum,
@@ -158,23 +165,28 @@ export async function createBudget({
           userId: session.userId
         },
         omit: omitBudgetProperties,
-      })
+      });
 
-      const spent = await getSpentAmount(tx, session.userId, budget.category);
+      const spent = await getSpentAmount(tx, session.userId, newBudget.category);
 
-      if (!budget) return null;
+      if (!newBudget) return null;
 
-      return { ...budget, spent };
-    })
+      return { ...newBudget, spent };
+    });
 
     return { data: { budget } };
   } catch (error) {
-    console.error("failed update budget", error);
+    console.error(BUDGET_ERROR_MESSAGES.CREATE_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { budget: null }, error: error.message };
+    }
+
     return {
       data: {
         budget: null,
       },
-      error: "failed to update budget",
+      error: BUDGET_ERROR_MESSAGES.CREATE_FAILED,
     };
   }
 }
@@ -188,18 +200,18 @@ export async function updateBudgetById({
 
   try {
     const budget = await prisma.$transaction(async (tx) => {
-      const budgetResult = await tx.budget.findUnique({
+      const existingBudget = await tx.budget.findUnique({
         where: {
           id,
           userId: session.userId
         }
-      })
+      });
 
-      if (!budgetResult || budgetResult.userId !== session.userId) {
-        throw new Error(`Budget with id:${id} doesn't exist`)
+      if (!existingBudget) {
+        throw new Error(BUDGET_ERROR_MESSAGES.INVALID_ID);
       };
 
-      const budget = await tx.budget.update({
+      const updatedBudget = await tx.budget.update({
         where: {
           id,
           userId: session.userId
@@ -208,19 +220,24 @@ export async function updateBudgetById({
         omit: omitBudgetProperties,
       });
 
-      const spent = await getSpentAmount(tx, session.userId, budget.category);
+      const spent = await getSpentAmount(tx, session.userId, updatedBudget.category);
 
-      return { ...budget, spent }
+      return { ...updatedBudget, spent };
     });
 
     return { data: { budget } };
   } catch (error) {
-    console.error("failed update budget", error);
+    console.error(BUDGET_ERROR_MESSAGES.UPDATE_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { budget: null }, error: error.message };
+    }
+
     return {
       data: {
         budget: null,
       },
-      error: "failed to update budget",
+      error: BUDGET_ERROR_MESSAGES.UPDATE_FAILED,
     };
   }
 }
@@ -233,18 +250,18 @@ export async function deleteBudgetById(
 
   try {
     const budget = await prisma.$transaction(async (tx) => {
-      const budgetResult = await tx.budget.findUnique({
+      const existingBudget = await tx.budget.findUnique({
         where: {
           id,
           userId: session.userId
         }
-      })
+      });
 
-      if (!budgetResult || budgetResult.userId !== session.userId) {
-        throw new Error(`Budget with id:${id} doesn't exist`)
+      if (!existingBudget) {
+        throw new Error(BUDGET_ERROR_MESSAGES.INVALID_ID);
       };
 
-      const budget = await tx.budget.delete({
+      const deletedbudget = await tx.budget.delete({
         where: {
           id,
           userId: session.userId
@@ -252,19 +269,24 @@ export async function deleteBudgetById(
         omit: omitBudgetProperties,
       });
 
-      const spent = await getSpentAmount(tx, session.userId, budget.category);
+      const spent = await getSpentAmount(tx, session.userId, deletedbudget.category);
 
-      return { ...budget, spent }
+      return { ...deletedbudget, spent };
     });
 
     return { data: { budget } };
   } catch (error) {
-    console.error("failed delete budget", error);
+    console.error(BUDGET_ERROR_MESSAGES.DELETE_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { budget: null }, error: error.message };
+    }
+
     return {
       data: {
         budget: null,
       },
-      error: "failed to delete budget",
+      error: BUDGET_ERROR_MESSAGES.DELETE_FAILED,
     };
   }
 }

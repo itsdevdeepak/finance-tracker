@@ -1,4 +1,4 @@
-import { categorySelectOptions, SortingSelectOptions } from "./constants";
+import { CategorySelectOptions, SortingSelectOptions } from "./constants";
 
 export type TransactionRaw = {
   avatar: string;
@@ -19,7 +19,7 @@ export type Transaction = {
 };
 
 export type SortingOption = (typeof SortingSelectOptions)[number];
-export type CategoryOption = (typeof categorySelectOptions)[number];
+export type CategoryOption = (typeof CategorySelectOptions)[number];
 
 export type GetTransactionsParams = {
   query?: string;
@@ -43,21 +43,21 @@ export type GetTransactionsResponse = {
 };
 
 export type GetTransactionByIdResponse = {
-  data: { transaction: Transaction | null };
+  data: { transaction: Transaction | null; };
   error?: string;
 };
 
 export type CreateTransactionResponse = {
-  data: { transaction: Transaction | null };
+  data: { transaction: Transaction | null; };
   error?: string;
 };
 
 export type UpdateTransactionByIdResponse = {
-  data: { transaction: Transaction | null };
+  data: { transaction: Transaction | null; };
   error?: string;
 };
 
 export type DeleteTransactionByIdResponse = {
-  data: { transaction: Transaction | null };
+  data: { transaction: Transaction | null; };
   error?: string;
 };

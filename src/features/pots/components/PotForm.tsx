@@ -1,82 +1,82 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { Pot } from "../types";
 import { colorOptions } from "../constants";
-import { PotFormState } from "../actions";
-import { useModal } from "@/components/ui/Modal";
 import TextInput from "@/components/ui/form/TextInput";
 import ColorSelect from "@/components/ui/form/ColorSelect";
 import IconDollar from "@/components/icons/IconDollar";
 import DialogCard from "@/components/ui/DialogCard";
+import { FormAction } from "@/components/ui/form/types";
+import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
+import Form from "@/components/ui/form/Form";
+import SubmitButton from "@/components/ui/form/SubmitButton";
 
 export default function PotForm({
-  heading,
-  description,
-  initialData,
-  action,
+	heading,
+	description,
+	initialData,
+	action,
 }: {
-  heading: string;
-  description: string;
-  initialData?: Pot;
-  action: (
-    prevState: PotFormState,
-    formData: FormData,
-  ) => Promise<PotFormState>;
+	heading: string;
+	description: string;
+	initialData?: Pot;
+	action: FormAction;
 }) {
-  const context = useModal();
-  const [state, formAction, isPending] = useActionState(action, {
-    success: false,
-    data: initialData,
-  });
+	const [state, formAction, isPending] = useActionState(
+		action,
+		EMPTY_ACTION_STATE,
+	);
 
-  useEffect(() => {
-    if (state.success) {
-      context?.closeModal();
-    }
-  }, [state.success, context]);
+	const defaultValues = {
+		name: (state.payload?.get("name") as string) || initialData?.name || "",
+		target:
+			(state.payload?.get("target") as string) || initialData?.target || "",
+		theme: (state.payload?.get("theme") as string) || initialData?.theme || "",
+	};
 
-  return (
-    <DialogCard
-      heading={heading}
-      description={description}
-      error={state.errors?.other}
-    >
-      <form className="flow-base" action={formAction}>
-        <TextInput
-          autoFocus={true}
-          defaultValue={initialData?.name ?? ""}
-          label="Pot Name"
-          name="name"
-          placeholder="e.g. Rainy Days"
-          error={state.errors?.name}
-          helperText="Max 30 characters"
-        />
-        <TextInput
-          type="number"
-          defaultValue={initialData?.target ?? ""}
-          label="Target"
-          error={state.errors?.target}
-          name="target"
-          placeholder="e.g. 2000"
-          IconLeft={IconDollar}
-        />
-        <ColorSelect
-          defaultValue={initialData?.theme}
-          options={colorOptions}
-          label="Theme"
-          name="theme"
-        />
-        <button disabled={isPending} className="w-full button" type="submit">
-          {isPending
-            ? initialData
-              ? "Saving Changes"
-              : "Adding Pot"
-            : initialData
-              ? "Save Changes"
-              : "Add Pot"}
-        </button>
-      </form>
-    </DialogCard>
-  );
+	const buttonLabel = isPending
+		? initialData
+			? "Saving Changes"
+			: "Adding Pot"
+		: initialData
+			? "Save Changes"
+			: "Add Pot";
+
+	return (
+		<DialogCard heading={heading} description={description}>
+			<Form
+				action={formAction}
+				actionState={state}
+				fieldNames={Object.keys(defaultValues)}
+			>
+				<input type="hidden" name="id" value={initialData?.id} />
+				<TextInput
+					autoFocus={true}
+					defaultValue={defaultValues.name ?? ""}
+					label="Pot Name"
+					name="name"
+					placeholder="e.g. Rainy Days"
+					error={state.fieldErrors?.name}
+					helperText="Max 30 characters"
+				/>
+				<TextInput
+					type="number"
+					defaultValue={defaultValues.target}
+					label="Target"
+					error={state.fieldErrors?.target}
+					name="target"
+					placeholder="e.g. 2000"
+					IconLeft={IconDollar}
+				/>
+				<ColorSelect
+					defaultValue={defaultValues?.theme}
+					options={colorOptions}
+					label="Theme"
+					name="theme"
+				/>
+				<SubmitButton label={buttonLabel} />
+			</Form>
+		</DialogCard>
+	);
 }

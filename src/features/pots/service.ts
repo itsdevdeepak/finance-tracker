@@ -8,12 +8,13 @@ import {
 } from "./types";
 import { verifySession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
+import { POT_ERROR_MESSAGES } from "./constants";
 
 const omitPotProperties = {
   createdAt: true,
   updatedAt: true,
   userId: true,
-}
+};
 
 export async function getPots(): Promise<GetPotsResponse> {
   const session = await verifySession();
@@ -23,16 +24,16 @@ export async function getPots(): Promise<GetPotsResponse> {
     const pots = await prisma.pot.findMany({
       where: { userId: session.userId },
       omit: omitPotProperties
-    })
+    });
 
     return { data: { pots } };
   } catch (error) {
-    console.error("failed getting pots data", error);
+    console.error(POT_ERROR_MESSAGES.FETCH_ALL_FAILED, error);
     return {
       data: {
         pots: [],
       },
-      error: "failed getting pots data",
+      error: POT_ERROR_MESSAGES.FETCH_ALL_FAILED,
     };
   }
 }
@@ -48,16 +49,16 @@ export async function getPotById(id: string): Promise<GetPotsByIdResponse> {
         userId: session.userId
       },
       omit: omitPotProperties
-    })
+    });
 
     return { data: { pot } };
   } catch (error) {
-    console.error("failed getting pot data", error);
+    console.error(POT_ERROR_MESSAGES.FETCH_BY_ID_FAILED, error);
     return {
       data: {
         pot: null,
       },
-      error: "failed getting pots data",
+      error: POT_ERROR_MESSAGES.FETCH_BY_ID_FAILED,
     };
   }
 }
@@ -72,8 +73,8 @@ export async function updatePotById(
   try {
     const existingPot = await prisma.pot.findUnique({ where: { id, userId: session.userId } });
 
-    if (!existingPot || existingPot.userId !== session.userId) {
-      throw new Error(`Pot with id:${id} doesn't exist`);
+    if (!existingPot) {
+      throw new Error(POT_ERROR_MESSAGES.INVALID_ID);
     }
 
     const updatedPot = await prisma.pot.update({
@@ -84,12 +85,17 @@ export async function updatePotById(
 
     return { data: { pot: updatedPot } };
   } catch (error) {
-    console.error("failed update pot", error);
+    console.error(POT_ERROR_MESSAGES.UPDATE_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { pot: null }, error: error.message };
+    }
+
     return {
       data: {
         pot: null,
       },
-      error: "failed to update pot",
+      error: POT_ERROR_MESSAGES.UPDATE_FAILED
     };
   }
 }
@@ -103,8 +109,8 @@ export async function deletePotById(
   try {
     const existingPot = await prisma.pot.findUnique({ where: { id, userId: session.userId } });
 
-    if (!existingPot || existingPot.userId !== session.userId) {
-      throw new Error(`Pot with id:${id} doesn't exist`);
+    if (!existingPot) {
+      throw new Error(POT_ERROR_MESSAGES.INVALID_ID);
     }
 
     const deletedPot = await prisma.pot.delete({
@@ -112,16 +118,21 @@ export async function deletePotById(
         id,
       },
       omit: omitPotProperties
-    })
+    });
 
     return { data: { pot: deletedPot } };
   } catch (error) {
-    console.error("failed to delete pot", error);
+    console.error(POT_ERROR_MESSAGES.DELETE_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { pot: null }, error: error.message };
+    }
+
     return {
       data: {
         pot: null,
       },
-      error: "failed to delete pot",
+      error: POT_ERROR_MESSAGES.DELETE_FAILED,
     };
   }
 }
@@ -143,8 +154,8 @@ export async function createNewPot(
       }
     });
 
-    if (existingPot && existingPot.userId !== session.userId) {
-      throw new Error(`Pot with name:${potData.name} already exist`);
+    if (existingPot) {
+      throw new Error(POT_ERROR_MESSAGES.DUPLICATE);
     }
 
     const newPot = await prisma.pot.create({
@@ -153,16 +164,21 @@ export async function createNewPot(
         userId: session.userId
       },
       omit: omitPotProperties
-    })
+    });
 
     return { data: { pot: newPot } };
   } catch (error) {
-    console.error("failed to create pot", error);
+    console.error(POT_ERROR_MESSAGES.CREATE_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { pot: null }, error: error.message };
+    }
+
     return {
       data: {
         pot: null,
       },
-      error: "Failed to create pot",
+      error: POT_ERROR_MESSAGES.CREATE_FAILED,
     };
   }
 }

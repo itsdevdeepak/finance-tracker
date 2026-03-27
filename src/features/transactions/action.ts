@@ -1,102 +1,108 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Transaction } from "./types";
-import { validateAmount, validateCategory, validateDate, validateName } from "./utils";
-import { createTransaction, deleteTransactionById, updateTransactionById } from "./service";
+import {
+  validateAmount,
+  validateCategory,
+  validateDate,
+  validateName,
+} from "./utils";
+import {
+  createTransaction,
+  deleteTransactionById,
+  updateTransactionById,
+} from "./service";
+import { ActionState } from "@/components/ui/form/types";
+import {
+  fromErrorToActionState,
+} from "@/components/ui/form/utils";
+import { redirect } from "next/navigation";
+import { setCookieByKey } from "@/actions/cookies";
+import { TRANSACTION_ERROR_MESSAGES } from "./constants";
+import { transactionsPath } from "@/constants/paths";
 
-export type TransactionFormState = {
-  success: boolean;
-  errors?: {
-    name?: string;
-    amount?: string;
-    category?: string;
-    date?: string;
-    avatar?: string;
-    other?: string;
-  };
-  data?: Transaction;
-};
-
+type ValidFields = "id" | "name" | "amount" | "category" | "date" | "avatar";
+type TransactionFormState = ActionState<ValidFields>;
 
 export async function transactionFormAction(
-  prevState: TransactionFormState,
+  _prevState: TransactionFormState,
   formData: FormData,
 ): Promise<TransactionFormState> {
-  const id = prevState.data?.id;
 
+  const id = formData.get("id") as string | null;
   const name = validateName(formData.get("name"));
   const amount = validateAmount(formData.get("amount"));
   const category = validateCategory(formData.get("category"));
   const date = validateDate(formData.get("date"));
 
-  const errors: TransactionFormState["errors"] = {};
+  const fieldErrors: TransactionFormState["fieldErrors"] = {};
 
-  if (!name) errors.name = "Name must be between 1 and 30 characters";
-  if (!amount) errors.amount = "Amount must be a number";
-  if (!category) errors.category = "Invalid category name";
-  if (!date) errors.date = "Invalid date";
+  if (!name) fieldErrors.name = "Name must be between 1 and 30 characters";
+  if (!amount) fieldErrors.amount = "Amount must be a number";
+  if (!category) fieldErrors.category = "Invalid category name";
+  if (!date) fieldErrors.date = "Invalid date";
 
-  if (Object.keys(errors).length > 0) {
-    return { success: false, errors };
+  if (Object.keys(fieldErrors).length > 0) {
+    return fromErrorToActionState(fieldErrors, formData, {
+      isValidationError: true,
+    });
   }
 
   if (id) {
-    const { data, error } = await updateTransactionById(id, {
+    const { error } = await updateTransactionById(id, {
       name: name as string,
       amount: amount as number,
       category: category as string,
       date: date as Date,
     });
 
-    if (error || !data.transaction) {
-      return {
-        success: false,
-        errors: { other: "Failed to update transaction. Please try again!" },
-      };
+    if (error) {
+      return fromErrorToActionState(
+        error || TRANSACTION_ERROR_MESSAGES.UPDATE_FAILED,
+        formData,
+      );
     }
 
-    revalidatePath(`/transactions`);
-    revalidatePath(`/transactions/${id}`);
+    revalidatePath(transactionsPath());
+    await setCookieByKey("toast", "Transaction updated");
 
-    return { success: true, data: data.transaction };
+    redirect(transactionsPath());
+  } else {
+    const { error } = await createTransaction({
+      name: name as string,
+      amount: amount as number,
+      category: category as string,
+      date: date as Date,
+      avatar: null,
+    });
+
+    if (error) {
+      return fromErrorToActionState(
+        error || TRANSACTION_ERROR_MESSAGES.CREATE_FAILED,
+        formData,
+      );
+    }
+
+    await setCookieByKey("toast", "Transaction created");
+    revalidatePath(transactionsPath());
+
+    redirect(transactionsPath());
   }
-
-  const { data, error } = await createTransaction({
-    name: name as string,
-    amount: amount as number,
-    category: category as string,
-    date: date as Date,
-    avatar: null
-  });
-
-  if (error || !data.transaction)
-    return {
-      success: false,
-      errors: { other: "Failed to create transaction. Please try again!" },
-    };
-
-  revalidatePath("/pots");
-  return { success: true, data: data.transaction };
 }
 
-export type DeleteTransactionActionState = {
-  success: boolean;
-  error?: string;
-  data?: Transaction;
-};
+export async function deleteTransaction(
+  _prevState: ActionState<"id">,
+  formData: FormData,
+): Promise<ActionState<"id">> {
+  const id = (formData.get("id") as string) || "";
+  const { error } = await deleteTransactionById(id);
 
-export async function deleteTransaction(id: string): Promise<DeleteTransactionActionState> {
-  const { error, data } = await deleteTransactionById(id);
+  if (error) {
+    return fromErrorToActionState(error || TRANSACTION_ERROR_MESSAGES.DELETE_FAILED, formData);
+  }
 
-  if (error || !data.transaction)
-    return {
-      success: false,
-      error: "Failed to delete transaction. Please try again! or Try going back.",
-    };
+  revalidatePath(transactionsPath());
+  await setCookieByKey("toast", "Transaction deleted");
 
-  revalidatePath(`/transactions`);
-  revalidatePath(`/transactions/${data.transaction.id}`);
-
-  return { success: true, data: data.transaction };
+  redirect(transactionsPath());
 }

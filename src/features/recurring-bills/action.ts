@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { RecurringBill } from "./types";
 import { createRecurringBill, deleteRecurringBillById, updateRecurringBillById } from "./service";
 import {
   validateDueDate,
@@ -9,98 +8,80 @@ import {
   validateRecurringBillCategory,
   validateRecurringBillName,
 } from "./utils";
-
-export type RecurringBillFormState = {
-  success: boolean;
-  errors?: {
-    name?: string;
-    amount?: string;
-    category?: string;
-    dueDate?: string;
-    other?: string;
-  };
-  data?: RecurringBill;
-};
-
+import { ActionState } from "@/components/ui/form/types";
+import { fromErrorToActionState } from "@/components/ui/form/utils";
+import { RECURRING_BILLS_ERROR_MESSAGES } from "./constants";
+import { redirect } from "next/navigation";
+import { setCookieByKey } from "@/actions/cookies";
+import { recurringBillsPath } from "@/constants/paths";
 
 export async function recurringBillFormAction(
-  prevState: RecurringBillFormState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<RecurringBillFormState> {
-  const id = prevState.data?.id;
-
+): Promise<ActionState> {
+  const id = formData.get("name") as string | null;
   const name = validateRecurringBillName(formData.get("name"));
   const amount = validateRecurringBillAmount(formData.get("amount"));
   const category = validateRecurringBillCategory(formData.get("category"));
   const dueDate = validateDueDate(formData.get("dueDate") ?? formData.get("date"));
 
-  const errors: RecurringBillFormState["errors"] = {};
+  const fieldErrors: ActionState["fieldErrors"] = {};
 
-  if (!name) errors.name = "Name must be between 1 and 30 characters";
-  if (!amount) errors.amount = "Amount must be a number";
-  if (!category) errors.category = "Invalid category name";
-  if (!dueDate) errors.dueDate = "Date must be between 1 and 31";
+  if (!name) fieldErrors.name = "Name must be between 1 and 30 characters";
+  if (!amount) fieldErrors.amount = "Amount must be a number";
+  if (!category) fieldErrors.category = "Invalid category name";
+  if (!dueDate) fieldErrors.dueDate = "Date must be between 1 and 31";
 
-  if (Object.keys(errors).length > 0) {
-    return { success: false, errors };
+  if (Object.keys(fieldErrors).length > 0) {
+    return fromErrorToActionState(fieldErrors, formData, {
+      isValidationError: true,
+    });
   }
 
   if (id) {
-    const { data, error } = await updateRecurringBillById(id, {
+    const { error } = await updateRecurringBillById(id, {
       name: name as string,
       amount: amount as number,
       category: category as string,
       dueDate: dueDate as number
     });
 
-    if (error || !data.recurringBill) {
-      return {
-        success: false,
-        errors: { other: "Failed to update recurring bill. Please try again!" },
-      };
+    if (error) {
+      return fromErrorToActionState(error || RECURRING_BILLS_ERROR_MESSAGES.UPDATE_FAILED, formData);
     }
 
-    revalidatePath(`/recurring-bills`);
-    revalidatePath(`/recurring-bills/${id}`);
+    revalidatePath(recurringBillsPath());
+    await setCookieByKey("toast", "Recurring bill updated");
+  } else {
+    const { error } = await createRecurringBill({
+      name: name as string,
+      amount: amount as number,
+      category: category as string,
+      dueDate: dueDate as number,
+      avatar: null
+    });
 
-    return { success: true, data: data.recurringBill };
+    if (error)
+      return fromErrorToActionState(error || RECURRING_BILLS_ERROR_MESSAGES.CREATE_FAILED, formData);
+
+    revalidatePath(recurringBillsPath());
+    await setCookieByKey("toast", "Recurring bill created");
   }
 
-  const { data, error } = await createRecurringBill({
-    name: name as string,
-    amount: amount as number,
-    category: category as string,
-    dueDate: dueDate as number,
-    avatar: null
-  });
-
-  if (error || !data.recurringBill)
-    return {
-      success: false,
-      errors: { other: "Failed to create recurring bill. Please try again!" },
-    };
-
-  revalidatePath("/recurring-bills");
-  return { success: true, data: data.recurringBill };
+  redirect(recurringBillsPath());
 }
 
-export type DeleteRecurringBillActionState = {
-  success: boolean;
-  error?: string;
-  data?: RecurringBill;
-};
+export async function deleteRecurringBill(_prevState: ActionState,
+  formData: FormData): Promise<ActionState> {
+  const id = (formData.get("id") as string) || "";
+  const { error } = await deleteRecurringBillById(id);
 
-export async function deleteRecurringBill(id: string): Promise<DeleteRecurringBillActionState> {
-  const { error, data } = await deleteRecurringBillById(id);
+  if (error) {
+    fromErrorToActionState(error || RECURRING_BILLS_ERROR_MESSAGES.DELETE_FAILED, formData);
+  }
 
-  if (error || !data.recurringBill)
-    return {
-      success: false,
-      error: "Failed to delete recurring bill. Please try again! or Try going back.",
-    };
+  revalidatePath(recurringBillsPath());
+  await setCookieByKey("toast", "Recurring bill deleted");
 
-  revalidatePath(`/recurring-bills`);
-  revalidatePath(`/recurring-bills/${data.recurringBill.id}`);
-
-  return { success: true, data: data.recurringBill };
+  redirect(recurringBillsPath());
 }

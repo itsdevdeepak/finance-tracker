@@ -1,145 +1,139 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { Pot } from "../types";
-import { PotSavingFormState } from "../actions";
 import { formatCurrency } from "@/lib/utils/format";
-import { useModal } from "@/components/ui/Modal";
 import ProgressBar from "./ProgressBar";
 import TextInput from "@/components/ui/form/TextInput";
 import IconDollar from "@/components/icons/IconDollar";
 import DialogCard from "@/components/ui/DialogCard";
+import { FormAction } from "@/components/ui/form/types";
+import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
+import Form from "@/components/ui/form/Form";
+import SubmitButton from "@/components/ui/form/SubmitButton";
 
 function AmountPreview({
-  type,
-  target,
-  newAmount,
-  total,
+	isWithdrawing,
+	target,
+	newAmount,
+	total,
 }: {
-  type: "adding" | "withdraw";
-  newAmount: number;
-  target: number;
-  total: number;
+	isWithdrawing: boolean;
+	newAmount: number;
+	target: number;
+	total: number;
 }) {
-  const isWithdrawing = type === "withdraw";
-  const currentPercent = target > 0 ? Math.min(100, (total / target) * 100) : 0;
-  const rawDelta = target > 0 ? (newAmount / target) * 100 : 0;
+	const currentPercent = target > 0 ? Math.min(100, (total / target) * 100) : 0;
+	const rawDelta = target > 0 ? (newAmount / target) * 100 : 0;
 
-  const clampedDelta = isWithdrawing
-    ? Math.min(rawDelta, currentPercent)
-    : Math.min(rawDelta, 100 - currentPercent);
+	const clampedDelta = isWithdrawing
+		? Math.min(rawDelta, currentPercent)
+		: Math.min(rawDelta, 100 - currentPercent);
 
-  const displayPercent = isWithdrawing
-    ? currentPercent - clampedDelta
-    : currentPercent + clampedDelta;
+	const displayPercent = isWithdrawing
+		? currentPercent - clampedDelta
+		: currentPercent + clampedDelta;
 
-  const basePercent = isWithdrawing
-    ? currentPercent - clampedDelta
-    : currentPercent;
+	const basePercent = isWithdrawing
+		? currentPercent - clampedDelta
+		: currentPercent;
 
-  const projectedTotal = isWithdrawing
-    ? Math.max(0, total - newAmount)
-    : total + newAmount;
+	const projectedTotal = isWithdrawing
+		? Math.max(0, total - newAmount)
+		: total + newAmount;
 
-  return (
-    <div className="flow-base">
-      <div className="flex justify-between items-center">
-        <span className="text-gray text-sm">New Amount</span>
-        <span className="text-3xl font-bold">
-          {formatCurrency(projectedTotal)}
-        </span>
-      </div>
-      <div className="flow-xs">
-        <ProgressBar
-          basePercent={basePercent}
-          deltaPercent={clampedDelta}
-          isWithdrawing={isWithdrawing}
-        />
-        <div className="flex justify-between text-xs">
-          <span
-            className={`font-bold ${isWithdrawing ? "text-red" : "text-green"}`}
-          >
-            {displayPercent.toFixed(2)}%
-          </span>
-          <span className="text-gray">Target of {formatCurrency(target)}</span>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="flow-base">
+			<div className="flex justify-between items-center">
+				<span className="text-gray text-sm">New Amount</span>
+				<span className="text-3xl font-bold">
+					{formatCurrency(projectedTotal)}
+				</span>
+			</div>
+			<div className="flow-xs">
+				<ProgressBar
+					basePercent={basePercent}
+					deltaPercent={clampedDelta}
+					isWithdrawing={isWithdrawing}
+				/>
+				<div className="flex justify-between text-xs">
+					<span
+						className={`font-bold ${isWithdrawing ? "text-red" : "text-green"}`}
+					>
+						{displayPercent.toFixed(2)}%
+					</span>
+					<span className="text-gray">Target of {formatCurrency(target)}</span>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export default function SavingForm({
-  heading,
-  description,
-  action,
-  type,
-  pot,
+	heading,
+	description,
+	action,
+	type,
+	pot,
 }: {
-  heading: string;
-  description: string;
-  type: "withdraw" | "adding";
-  action: (
-    prevState: PotSavingFormState,
-    formData: FormData,
-  ) => Promise<PotSavingFormState>;
-  pot: Pot;
+	heading: string;
+	description: string;
+	type: "withdraw" | "adding";
+	action: FormAction;
+	pot: Pot;
 }) {
-  const [amount, setAmount] = useState(0);
-  const [state, formAction, isPending] = useActionState(action, {
-    success: false,
-    data: pot,
-  });
-  const context = useModal();
+	const [amount, setAmount] = useState(0);
+	const [state, formAction, isPending] = useActionState(
+		action,
+		EMPTY_ACTION_STATE,
+	);
 
-  useEffect(() => {
-    if (state.success) {
-      context?.closeModal();
-    }
-  }, [state.success, context]);
+	const isWithdrawing = type === "withdraw";
+	const amountLimit = isWithdrawing ? pot.total : pot.target - pot.total;
 
-  const isWithdrawing = type === "withdraw";
-  const amountLimit = isWithdrawing ? pot.total : pot.target - pot.total;
+	const projectedTotal = isWithdrawing
+		? Math.max(0, pot.total - amount)
+		: pot.total + amount;
 
-  const buttonText = isWithdrawing ? "Confirm Withdrawal" : "Confirm Addition";
-  const buttonPendingText = isWithdrawing
-    ? "Withdrawing from Pot"
-    : "Adding to Pot";
+	const buttonText = isWithdrawing ? "Confirm Withdrawal" : "Confirm Addition";
+	const buttonPendingText = isWithdrawing
+		? "Withdrawing from Pot"
+		: "Adding to Pot";
 
-  const projectedTotal = isWithdrawing
-    ? Math.max(0, pot.total - amount)
-    : pot.total + amount;
+	const buttonLabel = isPending ? buttonPendingText : buttonText;
 
-  return (
-    <DialogCard
-      heading={heading}
-      description={description}
-      error={state.errors?.other}
-    >
-      <form action={formAction} className="flow-lg">
-        <AmountPreview
-          type={type}
-          target={pot.target}
-          total={pot.total}
-          newAmount={amount}
-        />
-        <TextInput
-          type="number"
-          autoFocus={true}
-          label={`Amount to ${isWithdrawing ? "Withdraw" : "Add"}`}
-          name="amount"
-          placeholder="e.g. 2000"
-          min={0}
-          max={amountLimit}
-          error={state.errors?.total}
-          value={amount.toString()}
-          onChange={(event) => setAmount(+event.target.value)}
-          IconLeft={IconDollar}
-        />
-        <input type="hidden" name="total" value={projectedTotal} />
-        <button disabled={isPending} className="w-full button" type="submit">
-          {isPending ? buttonPendingText : buttonText}
-        </button>
-      </form>
-    </DialogCard>
-  );
+	return (
+		<DialogCard heading={heading} description={description}>
+			<Form
+				action={formAction}
+				actionState={state}
+				fieldNames={["total", "target"]}
+				className="gap-lg"
+			>
+				<input type="hidden" name="id" value={pot.id} />
+				<input type="hidden" name="target" value={pot.target} />
+				<input type="hidden" name="total" value={projectedTotal} />
+				<AmountPreview
+					isWithdrawing={isWithdrawing}
+					target={pot.target}
+					total={pot.total}
+					newAmount={amount}
+				/>
+				<TextInput
+					type="number"
+					autoFocus={true}
+					label={`Amount to ${isWithdrawing ? "Withdraw" : "Add"}`}
+					name="amount"
+					placeholder="e.g. 2000"
+					min={0}
+					max={amountLimit}
+					error={state.fieldErrors?.total}
+					value={amount.toString()}
+					onChange={(event) => setAmount(+event.target.value)}
+					IconLeft={IconDollar}
+				/>
+				<SubmitButton label={buttonLabel} />
+			</Form>
+		</DialogCard>
+	);
 }

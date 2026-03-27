@@ -32,3 +32,15 @@ export const WithdrawPot = {
   description:
     "Enter the amount you'd like to withdraw from this pot. Funds will be returned to your available balance.",
 };
+
+export const POT_ERROR_MESSAGES = {
+  NOT_FOUND: "Pot not found.",
+  DUPLICATE: "A pot with the same details already exists.",
+  INVALID_ID: "Invalid pot id.",
+  CREATE_FAILED: "Failed to create pot. Please try again later.",
+  UPDATE_FAILED: "Failed to update pot. Please try again later.",
+  DELETE_FAILED: "Failed to delete pot. Please try again later.",
+  FETCH_BY_ID_FAILED: "Failed to get pot. Please try again later.",
+  FETCH_ALL_FAILED: "Failed to get pots. Please try again later.",
+  UNEXPECTED: "Unexpected error. Please try again later.",
+} as const;

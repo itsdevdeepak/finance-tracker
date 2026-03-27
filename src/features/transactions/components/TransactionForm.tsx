@@ -2,102 +2,97 @@
 
 import DialogCard from "@/components/ui/DialogCard";
 import { Transaction } from "../types";
-import { TransactionFormState } from "../action";
-import { ChangeEvent, useActionState, useState } from "react";
+import { useActionState } from "react";
 import TextInput from "@/components/ui/form/TextInput";
 import Select from "@/components/ui/form/Select";
-import { categorySelectOptions } from "../constants";
 import IconDollar from "@/components/icons/IconDollar";
+import { FormAction } from "@/components/ui/form/types";
+import { EMPTY_ACTION_STATE } from "@/components/ui/form/constants";
+import Form from "@/components/ui/form/Form";
+import SubmitButton from "@/components/ui/form/SubmitButton";
+import { CATEGORIES } from "@/constants/transaction";
 
 export default function TransactionForm({
-  heading,
-  description,
-  initialData,
-  action,
+	heading,
+	description,
+	initialData,
+	action,
 }: {
-  heading: string;
-  description: string;
-  initialData?: Transaction;
-  action: (
-    prevState: TransactionFormState,
-    formData: FormData,
-  ) => Promise<TransactionFormState>;
+	heading: string;
+	description: string;
+	initialData?: Transaction;
+	action: FormAction;
 }) {
-  const [formValues, setFormValues] = useState({
-    name: initialData?.name ?? "",
-    amount: initialData?.amount?.toString() ?? "",
-    avatar: initialData?.avatar ?? "",
-    date: initialData?.date.toString() ?? "",
-  });
+	const [state, formAction, isPending] = useActionState(
+		action,
+		EMPTY_ACTION_STATE,
+	);
 
-  const [state, formAction, isPending] = useActionState(action, {
-    success: false,
-  });
+	const defaultValues = {
+		name: (state.payload?.get("name") as string) || initialData?.name || "",
+		amount:
+			(state.payload?.get("amount") as string) || initialData?.amount || "",
+		avatar:
+			(state.payload?.get("avatar") as string) || initialData?.avatar || "",
+		date:
+			(state.payload?.get("date") as string) ||
+			initialData?.date.toDateString() ||
+			"",
+	};
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
+	const buttonLabel = isPending
+		? initialData
+			? "Saving Changes"
+			: "Adding Transaction"
+		: initialData
+			? "Save Changes"
+			: "Add Transaction";
 
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  return (
-    <DialogCard
-      heading={heading}
-      description={description}
-      error={state.errors?.other}
-    >
-      <form className="flow-base" action={formAction}>
-        <TextInput
-          autoFocus={true}
-          label="Transaction Name"
-          name="name"
-          placeholder="e.g. Jimmy"
-          helperText="Max 30 characters"
-          value={formValues.name}
-          onChange={handleInputChange}
-          error={state.errors?.name}
-        />
-        <TextInput
-          type="number"
-          label="Amount"
-          name="amount"
-          placeholder="e.g. 2000"
-          value={formValues.amount}
-          onChange={handleInputChange}
-          error={state.errors?.amount}
-          IconLeft={IconDollar}
-        />
-        <TextInput
-          type="text"
-          label="Date"
-          name="date"
-          placeholder="e.g. 2026/02/13"
-          value={formValues.date}
-          onChange={handleInputChange}
-          error={state.errors?.date}
-          helperText="Format: YYYY/MM/DD"
-        />
-        <Select
-          defaultValue={initialData?.category}
-          options={categorySelectOptions.map((category) => ({
-            value: category,
-          }))}
-          label="Category"
-          name="category"
-        />
-        <button disabled={isPending} className="w-full button" type="submit">
-          {isPending
-            ? initialData
-              ? "Saving Changes"
-              : "Adding Transaction"
-            : initialData
-              ? "Save Changes"
-              : "Add Transaction"}
-        </button>
-      </form>
-    </DialogCard>
-  );
+	return (
+		<DialogCard heading={heading} description={description}>
+			<Form
+				action={formAction}
+				actionState={state}
+				fieldNames={Object.keys(defaultValues)}
+			>
+				<input type="hidden" name="id" value={initialData?.id} />
+				<TextInput
+					autoFocus={true}
+					label="Transaction Name"
+					name="name"
+					placeholder="e.g. Jimmy"
+					helperText="Max 30 characters"
+					defaultValue={defaultValues.name}
+					error={state.fieldErrors?.name}
+				/>
+				<TextInput
+					type="number"
+					label="Amount"
+					name="amount"
+					placeholder="e.g. 2000"
+					defaultValue={defaultValues.amount}
+					error={state.fieldErrors?.amount}
+					IconLeft={IconDollar}
+				/>
+				<TextInput
+					type="text"
+					label="Date"
+					name="date"
+					placeholder="e.g. 2026/02/13"
+					defaultValue={defaultValues.date}
+					error={state.fieldErrors?.date}
+					helperText="Format: YYYY/MM/DD"
+				/>
+				<Select
+					defaultValue={initialData?.category}
+					options={CATEGORIES.map((category) => ({
+						value: category,
+					}))}
+					label="Category"
+					name="category"
+				/>
+				<SubmitButton label={buttonLabel} />
+			</Form>
+		</DialogCard>
+	);
 }

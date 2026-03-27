@@ -1,7 +1,8 @@
 import { validateNumber, validateString } from "@/lib/utils/validation";
-import { categorySelectOptions, SortingSelectOptions } from "./constants";
+import { CategorySelectOptions, SortingSelectOptions } from "./constants";
 import { CategoryOption, SortingOption } from "./types";
 import { decodeSearchParam } from "@/lib/utils/url";
+import { CATEGORIES } from "@/constants/transaction";
 
 export function isValidSortOption(option: string): option is SortingOption {
   return SortingSelectOptions.includes(option as SortingOption);
@@ -16,32 +17,32 @@ export function getOrderBy(sortingOption: string): Record<string, "asc" | "desc"
     case "Latest": {
       return {
         "date": "desc"
-      }
+      };
     }
     case "Oldest": {
       return {
         "date": "asc"
-      }
+      };
     }
     case "Highest": {
       return {
         "amount": "desc"
-      }
+      };
     }
     case "Lowest": {
       return {
         "amount": "asc"
-      }
+      };
     }
     case "A to Z": {
       return {
         "name": "asc"
-      }
+      };
     }
     case "Z to A": {
       return {
         "name": "desc"
-      }
+      };
     }
     default:
       return {
@@ -53,7 +54,7 @@ export function getOrderBy(sortingOption: string): Record<string, "asc" | "desc"
 export function isValidCategoryOption(
   option: string,
 ): option is CategoryOption {
-  return categorySelectOptions.includes(option as CategoryOption);
+  return CATEGORIES.includes(option as CategoryOption);
 }
 
 function sanitizeString(value: string | undefined, fallback = "") {
@@ -107,7 +108,6 @@ export function validateAvatar(rawAvatar: unknown) {
   }
 }
 
-
 export function sanitizeSearchParams(
   searchParams: Record<string, string | string[] | undefined>,
 ) {
@@ -136,7 +136,7 @@ export function sanitizeSearchParams(
     category:
       rawCategory && isValidCategoryOption(sanitizeString(rawCategory))
         ? sanitizeString(rawCategory)
-        : categorySelectOptions[0],
+        : CategorySelectOptions[0],
     page: sanitizeNumber(rawPage, 1),
     limit: Math.min(100, sanitizeNumber(rawLimit, 10)),
   };

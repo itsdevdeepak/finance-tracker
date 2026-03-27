@@ -1,5 +1,5 @@
 import { isValidSortOption } from "../transactions/utils";
-import { categories } from "@/constants/transaction";
+import { CATEGORIES } from "@/constants/transaction";
 import { validateNumber, validateString } from "@/lib/utils/validation";
 
 export function formatToMonthlyDate(date: Date | number) {
@@ -57,7 +57,7 @@ export function getBillStatus(dueDate: number, lastPaidDate: Date | null,) {
   const dueThresholdDate = new Date(today.getFullYear(), today.getMonth(), safeDueDate - 5);
 
   if (today >= dueThresholdDate) return "due";
-  return "upcoming"
+  return "upcoming";
 }
 
 
@@ -70,32 +70,32 @@ export function getOrderBy(sortingOption: string): Record<string, "asc" | "desc"
     case "Latest": {
       return {
         "dueDate": "asc"
-      }
+      };
     }
     case "Oldest": {
       return {
         "dueDate": "desc"
-      }
+      };
     }
     case "Highest": {
       return {
         "amount": "desc"
-      }
+      };
     }
     case "Lowest": {
       return {
         "amount": "asc"
-      }
+      };
     }
     case "A to Z": {
       return {
         "name": "asc"
-      }
+      };
     }
     case "Z to A": {
       return {
         "name": "desc"
-      }
+      };
     }
     default:
       return {
@@ -110,7 +110,7 @@ export function validateRecurringBillName(rawName: unknown) {
 
 export function validateRecurringBillCategory(rawCategory: unknown) {
   const category = validateString(rawCategory, { minLength: 1, maxLength: 30 });
-  if (!category || !categories.includes(category)) return null;
+  if (!category || !CATEGORIES.includes(category)) return null;
   return category;
 }
 
