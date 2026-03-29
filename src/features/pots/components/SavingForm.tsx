@@ -102,9 +102,12 @@ export default function SavingForm({
 
 	const buttonLabel = isPending ? buttonPendingText : buttonText;
 
+	const formKey = [pot?.id || "new-saving", pot.target, pot.total].join("|");
+
 	return (
 		<DialogCard heading={heading} description={description}>
 			<Form
+				key={formKey}
 				action={formAction}
 				actionState={state}
 				fieldNames={["total", "target"]}

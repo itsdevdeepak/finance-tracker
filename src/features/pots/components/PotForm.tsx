@@ -43,9 +43,17 @@ export default function PotForm({
 			? "Save Changes"
 			: "Add Pot";
 
+	const formKey = [
+		initialData?.id || "new-pot",
+		defaultValues.name,
+		defaultValues.target,
+		defaultValues.theme,
+	].join("|");
+
 	return (
 		<DialogCard heading={heading} description={description}>
 			<Form
+				key={formKey}
 				action={formAction}
 				actionState={state}
 				fieldNames={Object.keys(defaultValues)}

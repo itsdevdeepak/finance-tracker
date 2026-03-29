@@ -45,10 +45,18 @@ export default function BudgetForm({
 			? "Save Changes"
 			: "Add Budget";
 
+	const formKey = [
+		initialData?.id || "new-budget",
+		defaultValues.category,
+		defaultValues.maximum,
+		defaultValues.theme,
+	].join("|");
+
 	return (
 		<>
 			<DialogCard heading={heading} description={description}>
 				<Form
+					key={formKey}
 					action={formAction}
 					actionState={state}
 					fieldNames={Object.keys(defaultValues)}

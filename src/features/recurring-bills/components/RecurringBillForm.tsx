@@ -47,9 +47,18 @@ export default function RecurringBillForm({
 			? "Save Changes"
 			: "Add Recurring Bill";
 
+	const formKey = [
+		initialData?.id || "new-recurring-bill",
+		defaultValues.name,
+		defaultValues.amount,
+		defaultValues.dueDate,
+		defaultValues.category,
+	].join("|");
+
 	return (
 		<DialogCard heading={heading} description={description}>
 			<Form
+				id={formKey}
 				action={formAction}
 				actionState={state}
 				fieldNames={Object.keys(defaultValues)}

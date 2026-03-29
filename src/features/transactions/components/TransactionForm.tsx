@@ -36,8 +36,12 @@ export default function TransactionForm({
 			(state.payload?.get("avatar") as string) || initialData?.avatar || "",
 		date:
 			(state.payload?.get("date") as string) ||
-			initialData?.date.toDateString() ||
+			(initialData?.date instanceof Date
+				? initialData.date.toISOString().split("T")[0]
+				: initialData?.date) ||
 			"",
+		category:
+			(state.payload?.get("category") as string) || initialData?.category || "",
 	};
 
 	const buttonLabel = isPending
@@ -48,9 +52,18 @@ export default function TransactionForm({
 			? "Save Changes"
 			: "Add Transaction";
 
+	const formKey = [
+		initialData?.id || "new-transaction",
+		defaultValues.name,
+		defaultValues.amount,
+		defaultValues.date,
+		defaultValues.category,
+	].join("|");
+
 	return (
 		<DialogCard heading={heading} description={description}>
 			<Form
+				key={formKey}
 				action={formAction}
 				actionState={state}
 				fieldNames={Object.keys(defaultValues)}
