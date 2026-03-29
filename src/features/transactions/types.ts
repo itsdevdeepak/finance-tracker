@@ -11,7 +11,7 @@ export type TransactionRaw = {
 
 export type Transaction = {
   id: string;
-  avatar: string | null;
+  avatar: string;
   name: string;
   category: string;
   date: Date;

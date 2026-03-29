@@ -34,6 +34,8 @@ export default function RecurringBillForm({
 			(state.payload?.get("amount") as string) || initialData?.amount || "",
 		dueDate:
 			(state.payload?.get("dueDate") as string) || initialData?.dueDate || "",
+		avatar:
+			(state.payload?.get("avatar") as string) || initialData?.avatar || "",
 
 		category:
 			(state.payload?.get("category") as string) || initialData?.category || "",
@@ -53,17 +55,19 @@ export default function RecurringBillForm({
 		defaultValues.amount,
 		defaultValues.dueDate,
 		defaultValues.category,
+		defaultValues.avatar,
 	].join("|");
 
 	return (
 		<DialogCard heading={heading} description={description}>
 			<Form
-				id={formKey}
+				key={formKey}
 				action={formAction}
 				actionState={state}
 				fieldNames={Object.keys(defaultValues)}
 			>
 				<input type="hidden" name="id" value={initialData?.id} />
+				<input type="hidden" name="avatar" value={defaultValues.avatar} />
 				<InputField
 					autoFocus={true}
 					defaultValue={defaultValues?.name}

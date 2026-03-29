@@ -19,6 +19,7 @@ import { prisma } from "@/lib/prisma";
 import { TransactionWhereInput } from "@/generated/prisma/models";
 import { getQueryConfig } from "@/lib/utils/prisma";
 import { TRANSACTION_ERROR_MESSAGES } from "./constants";
+import { getAvatarOrRandom } from "@/lib/utils/avatars";
 
 const omitProperties = {
   updatedAt: true,
@@ -254,7 +255,11 @@ export async function createTransaction(transactionData: Omit<Transaction, "id" 
     }
 
     const newTransaction = await prisma.transaction.create({
-      data: { ...transactionData, avatar: transactionData.avatar || null, userId: session.userId },
+      data: {
+        ...transactionData,
+        avatar: getAvatarOrRandom(transactionData.avatar),
+        userId: session.userId,
+      },
       omit: omitProperties
     });
 

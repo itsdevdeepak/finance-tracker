@@ -1,11 +1,11 @@
 import Table from "@/components/ui/Table";
 import { Transaction } from "../types";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
-import Avatar from "./Avatar";
 import IconEdit from "@/components/icons/IconEdit";
 import IconTrash from "@/components/icons/IconTrash";
 import Link from "next/link";
 import { transactionPath } from "@/constants/paths";
+import Image from "next/image";
 
 export default function TransactionTable({
 	className = "",
@@ -32,7 +32,13 @@ export default function TransactionTable({
 						<Table.Row key={transaction.id} data-avatar={transaction.avatar}>
 							<Table.Data>
 								<div className="inline-flex items-center gap-base font-bold">
-									<Avatar imageUrl={transaction.avatar} />
+									<Image
+										className="rounded-full"
+										src={transaction.avatar}
+										alt=""
+										width={40}
+										height={40}
+									/>
 									{transaction.name}
 								</div>
 							</Table.Data>

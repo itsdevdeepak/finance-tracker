@@ -1,7 +1,7 @@
 export type RecurringBill = {
   id: string;
   name: string;
-  avatar: string | null;
+  avatar: string;
   category: string;
   amount: number;
   dueDate: number;

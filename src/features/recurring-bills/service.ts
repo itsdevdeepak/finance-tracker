@@ -5,6 +5,7 @@ import { RecurringBillWhereInput } from "@/generated/prisma/models";
 import { getQueryConfig } from "@/lib/utils/prisma";
 import { prisma } from "@/lib/prisma";
 import { RECURRING_BILLS_ERROR_MESSAGES } from "./constants";
+import { getAvatarOrRandom } from "@/lib/utils/avatars";
 
 const omitProperties = {
   updatedAt: true,
@@ -221,7 +222,7 @@ export async function createRecurringBill(recurringBillData: Omit<RecurringBill,
     const recurringBill = await prisma.recurringBill.create({
       data: {
         ...recurringBillData,
-        avatar: recurringBillData.avatar || null,
+        avatar: getAvatarOrRandom(recurringBillData.avatar),
         userId: session.userId,
       },
       omit: omitProperties,
@@ -435,7 +436,7 @@ export async function payRecurringBillById(id: string): Promise<PayRecurringBill
             amount: -Math.abs(recurringBillResult.amount),
             category: recurringBillResult.category,
             date: now,
-            avatar: recurringBillResult.avatar,
+            avatar: getAvatarOrRandom(recurringBillResult.avatar),
             recurringBillId: recurringBillResult.id,
             userId: session.userId,
           },

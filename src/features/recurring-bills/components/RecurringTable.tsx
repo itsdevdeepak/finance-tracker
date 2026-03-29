@@ -4,14 +4,12 @@ import { formatCurrency } from "@/lib/utils/format";
 import { formatToMonthlyDate, getBillStatus } from "../utils";
 import IconBillPaid from "@/components/icons/IconBillPaid";
 import IconBillDue from "@/components/icons/IconBillDue";
-import Avatar from "./Avatar";
 import Link from "next/link";
 import IconEdit from "@/components/icons/IconEdit";
 import IconTrash from "@/components/icons/IconTrash";
 import { recurringBillPath } from "@/constants/paths";
-import { payRecurringBill } from "../action";
-import SubmitButton from "@/components/ui/form/SubmitButton";
 import PayRecurring from "./PayRecurring";
+import Image from "next/image";
 
 export default function RecurringTable({
 	recurringBills,
@@ -42,7 +40,13 @@ export default function RecurringTable({
 						<Table.Row key={recurring.id} data-avatar={recurring.avatar}>
 							<Table.Data>
 								<div className="inline-flex items-center gap-base font-bold">
-									<Avatar imageUrl={recurring.avatar} />
+									<Image
+										className="rounded-full"
+										src={recurring.avatar}
+										alt=""
+										width={40}
+										height={40}
+									/>
 									{recurring.name}
 								</div>
 							</Table.Data>

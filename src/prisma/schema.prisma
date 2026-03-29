@@ -20,7 +20,7 @@ model Transaction {
   amount    Int
   category  String
   date      DateTime
-  avatar    String?
+  avatar    String
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -75,7 +75,7 @@ model RecurringBill {
   amount    Int
   dueDate   Int      @db.SmallInt
   category  String
-  avatar    String?
+  avatar    String
 
   transactions Transaction[]
 

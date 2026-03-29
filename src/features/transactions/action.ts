@@ -20,6 +20,7 @@ import { redirect } from "next/navigation";
 import { setCookieByKey } from "@/actions/cookies";
 import { TRANSACTION_ERROR_MESSAGES } from "./constants";
 import { transactionsPath } from "@/constants/paths";
+import { getAvatarOrRandom } from "@/lib/utils/avatars";
 
 type ValidFields = "id" | "name" | "amount" | "category" | "date" | "avatar";
 type TransactionFormState = ActionState<ValidFields>;
@@ -34,6 +35,7 @@ export async function transactionFormAction(
   const amount = validateAmount(formData.get("amount"));
   const category = validateCategory(formData.get("category"));
   const date = validateDate(formData.get("date"));
+  const avatar = getAvatarOrRandom(formData.get("avatar") as string | null);
 
   const fieldErrors: TransactionFormState["fieldErrors"] = {};
 
@@ -54,6 +56,7 @@ export async function transactionFormAction(
       amount: amount as number,
       category: category as string,
       date: date as Date,
+      avatar,
     });
 
     if (error) {
@@ -73,7 +76,7 @@ export async function transactionFormAction(
       amount: amount as number,
       category: category as string,
       date: date as Date,
-      avatar: null,
+      avatar,
     });
 
     if (error) {

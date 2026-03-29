@@ -1,19 +1,23 @@
 import { Transaction } from "../types";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
-import Avatar from "./Avatar";
 import Link from "next/link";
 import IconEdit from "@/components/icons/IconEdit";
 import IconTrash from "@/components/icons/IconTrash";
 import { transactionPath } from "@/constants/paths";
+import Image from "next/image";
 
 function TransactionItem({ transaction }: { transaction: Transaction }) {
 	return (
 		<div className="flex gap-sm justify-between *:flex-1">
 			<div className="flex items-center gap-sm">
-				<Avatar
+				<Image
 					className="w-8 h-8 rounded-full"
-					imageUrl={transaction.avatar}
+					src={transaction.avatar}
+					alt=""
+					width={32}
+					height={32}
 				/>
+
 				<div className="flow-2xs">
 					<p className="font-bold">{transaction.name}</p>
 					<p className="text-gray">{transaction.category}</p>

@@ -58,6 +58,7 @@ export default function TransactionForm({
 		defaultValues.amount,
 		defaultValues.date,
 		defaultValues.category,
+		defaultValues.avatar,
 	].join("|");
 
 	return (
@@ -69,6 +70,7 @@ export default function TransactionForm({
 				fieldNames={Object.keys(defaultValues)}
 			>
 				<input type="hidden" name="id" value={initialData?.id} />
+				<input type="hidden" name="avatar" value={defaultValues.avatar} />
 				<InputField
 					autoFocus={true}
 					label="Transaction Name"

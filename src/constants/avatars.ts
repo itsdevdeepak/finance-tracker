@@ -1,0 +1,17 @@
+export const AVATARS = [
+  "/images/avatars/aqua-flow-utilities.jpg",
+  "/images/avatars/buzz-marketing-group.jpg",
+  "/images/avatars/bytewise.jpg",
+  "/images/avatars/ecofuel-energy.jpg",
+  "/images/avatars/elevate-education.jpg",
+  "/images/avatars/flavor-fiesta.jpg",
+  "/images/avatars/green-plate-eatery.jpg",
+  "/images/avatars/nimbus-data-storage.jpg",
+  "/images/avatars/pixel-playground.jpg",
+  "/images/avatars/savory-bites-bistro.jpg",
+  "/images/avatars/serenity-spa-and-wellness.jpg",
+  "/images/avatars/spark-electric-solutions.jpg",
+  "/images/avatars/swift-ride-share.jpg",
+  "/images/avatars/technova-innovations.jpg",
+  "/images/avatars/urban-services-hub.jpg",
+] as const;

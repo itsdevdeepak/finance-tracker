@@ -14,6 +14,7 @@ import { RECURRING_BILLS_ERROR_MESSAGES } from "./constants";
 import { redirect } from "next/navigation";
 import { setCookieByKey } from "@/actions/cookies";
 import { recurringBillsPath, transactionsPath } from "@/constants/paths";
+import { getAvatarOrRandom } from "@/lib/utils/avatars";
 
 export async function recurringBillFormAction(
   _prevState: ActionState,
@@ -24,6 +25,7 @@ export async function recurringBillFormAction(
   const amount = validateRecurringBillAmount(formData.get("amount"));
   const category = validateRecurringBillCategory(formData.get("category"));
   const dueDate = validateDueDate(formData.get("dueDate") ?? formData.get("date"));
+  const avatar = getAvatarOrRandom(formData.get("avatar") as string | null);
 
   const fieldErrors: ActionState["fieldErrors"] = {};
 
@@ -43,7 +45,8 @@ export async function recurringBillFormAction(
       name: name as string,
       amount: amount as number,
       category: category as string,
-      dueDate: dueDate as number
+      dueDate: dueDate as number,
+      avatar,
     });
 
     if (error) {
@@ -58,7 +61,7 @@ export async function recurringBillFormAction(
       amount: amount as number,
       category: category as string,
       dueDate: dueDate as number,
-      avatar: null
+      avatar,
     });
 
     if (error) {
