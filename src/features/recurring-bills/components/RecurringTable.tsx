@@ -9,6 +9,9 @@ import Link from "next/link";
 import IconEdit from "@/components/icons/IconEdit";
 import IconTrash from "@/components/icons/IconTrash";
 import { recurringBillPath } from "@/constants/paths";
+import { payRecurringBill } from "../action";
+import SubmitButton from "@/components/ui/form/SubmitButton";
+import PayRecurring from "./PayRecurring";
 
 export default function RecurringTable({
 	recurringBills,
@@ -67,10 +70,14 @@ export default function RecurringTable({
 								{formatCurrency(recurring.amount)}
 							</Table.Data>
 							<Table.Data className="font-bold">
-								<div className="flex items-center justify-end text-gray-light">
+								<div className="flex items-center justify-end text-gray-light overflow-hidden">
+									<PayRecurring
+										recurringId={recurring.id}
+										recurringStatus={status}
+									/>
 									<Link
 										href={`${recurringBillPath(recurring.id)}/edit`}
-										className="cursor-pointer hover:bg-gray-lighter p-xs rounded-lg hover:text-gray"
+										className="cursor>-pointer hover:bg-gray-lighter p-xs rounded-lg hover:text-gray"
 									>
 										<IconEdit className="size-lg" />
 									</Link>

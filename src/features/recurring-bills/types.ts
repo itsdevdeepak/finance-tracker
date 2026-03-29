@@ -5,7 +5,7 @@ export type RecurringBill = {
   category: string;
   amount: number;
   dueDate: number;
-  lastPaidDate: Date | null
+  lastPaidDate: Date | null;
 };
 
 export type GetRecurringBillsParams = {
@@ -41,21 +41,26 @@ export type GetRecurringBillsResponse = {
 };
 
 export type GetRecurringBillByIdResponse = {
-  data: { recurringBill: RecurringBill | null };
+  data: { recurringBill: RecurringBill | null; };
   error?: string;
 };
 
 export type CreateRecurringBillResponse = {
-  data: { recurringBill: RecurringBill | null };
+  data: { recurringBill: RecurringBill | null; };
   error?: string;
 };
 
 export type UpdateRecurringBillByIdResponse = {
-  data: { recurringBill: RecurringBill | null };
+  data: { recurringBill: RecurringBill | null; };
   error?: string;
 };
 
 export type DeleteRecurringBillByIdResponse = {
-  data: { recurringBill: RecurringBill | null };
+  data: { recurringBill: RecurringBill | null; };
+  error?: string;
+};
+
+export type PayRecurringBillByIdResponse = {
+  data: { recurringBill: RecurringBill | null; };
   error?: string;
 };

@@ -8,6 +8,8 @@ import Link from "next/link";
 import IconEdit from "@/components/icons/IconEdit";
 import IconTrash from "@/components/icons/IconTrash";
 import { recurringBillPath } from "@/constants/paths";
+import { payRecurringBill } from "../action";
+import PayRecurring from "./PayRecurring";
 
 function RecurringItem({
 	recurringBill,
@@ -48,6 +50,10 @@ function RecurringItem({
 			<div className="text-right flow-2xs flex items-center gap-base justify-end">
 				<p className="font-bold">{formatCurrency(recurringBill.amount)}</p>
 				<div className="flex items-center justify-end text-gray-light">
+					<PayRecurring
+						recurringId={recurringBill.id}
+						recurringStatus={status}
+					/>
 					<Link
 						href={`${recurringBillPath(recurringBill.id)}/edit`}
 						className="cursor-pointer hover:bg-gray-lighter p-xs rounded-lg hover:text-gray"

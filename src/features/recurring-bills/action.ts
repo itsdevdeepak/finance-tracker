@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createRecurringBill, deleteRecurringBillById, updateRecurringBillById } from "./service";
+import { createRecurringBill, deleteRecurringBillById, payRecurringBillById, updateRecurringBillById } from "./service";
 import {
   validateDueDate,
   validateRecurringBillAmount,
@@ -13,7 +13,7 @@ import { fromErrorToActionState } from "@/components/ui/form/utils";
 import { RECURRING_BILLS_ERROR_MESSAGES } from "./constants";
 import { redirect } from "next/navigation";
 import { setCookieByKey } from "@/actions/cookies";
-import { recurringBillsPath } from "@/constants/paths";
+import { recurringBillsPath, transactionsPath } from "@/constants/paths";
 
 export async function recurringBillFormAction(
   _prevState: ActionState,
@@ -82,6 +82,22 @@ export async function deleteRecurringBill(_prevState: ActionState,
 
   revalidatePath(recurringBillsPath());
   await setCookieByKey("toast", "Recurring bill deleted");
+
+  redirect(recurringBillsPath());
+}
+
+export async function payRecurringBill(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const id = (formData.get("id") as string) || "";
+
+  const { error } = await payRecurringBillById(id);
+
+  if (error) {
+    fromErrorToActionState(error || RECURRING_BILLS_ERROR_MESSAGES.PAY_FAILED, formData);
+  }
+
+  revalidatePath(recurringBillsPath());
+  revalidatePath(transactionsPath());
+  await setCookieByKey("toast", "Recurring bill paid");
 
   redirect(recurringBillsPath());
 }

@@ -1,4 +1,4 @@
-import { CreateRecurringBillResponse, DeleteRecurringBillByIdResponse, GetRecurringBillByIdResponse, GetRecurringBillsParams, GetRecurringBillsResponse, RecurringBill, UpdateRecurringBillByIdResponse } from "./types";
+import { CreateRecurringBillResponse, DeleteRecurringBillByIdResponse, GetRecurringBillByIdResponse, GetRecurringBillsParams, GetRecurringBillsResponse, PayRecurringBillByIdResponse, RecurringBill, UpdateRecurringBillByIdResponse } from "./types";
 import { getBillStatus, getOrderBy } from "./utils";
 import { verifySession } from "@/lib/auth-session";
 import { RecurringBillWhereInput } from "@/generated/prisma/models";
@@ -373,6 +373,98 @@ export async function deleteRecurringBillById(id: string): Promise<DeleteRecurri
         recurringBill: null
       },
       error: RECURRING_BILLS_ERROR_MESSAGES.DELETE_FAILED,
+    };
+  }
+}
+
+export async function payRecurringBillById(id: string): Promise<PayRecurringBillByIdResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
+  try {
+    const recurringBill = await prisma.$transaction(async (tx) => {
+      const recurringBillResult = await tx.recurringBill.findUnique({
+        where: {
+          id,
+          userId: session.userId,
+        },
+        include: {
+          transactions: {
+            take: 1,
+            select: { date: true },
+            orderBy: {
+              date: "desc",
+            },
+          },
+        },
+      });
+
+      if (!recurringBillResult) {
+        throw new Error(RECURRING_BILLS_ERROR_MESSAGES.INVALID_ID);
+      }
+
+      const latestPaidDate = recurringBillResult.transactions[0]?.date || null;
+      const status = getBillStatus(recurringBillResult.dueDate, latestPaidDate);
+
+      if (status !== "due") {
+        throw new Error(RECURRING_BILLS_ERROR_MESSAGES.NOT_DUE);
+      }
+
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+      const alreadyPaid = await tx.transaction.findFirst({
+        where: {
+          userId: session.userId,
+          recurringBillId: id,
+          date: {
+            gte: monthStart,
+            lt: nextMonthStart,
+          },
+        },
+        select: {
+          date: true,
+        },
+      });
+
+      if (!alreadyPaid) {
+        await tx.transaction.create({
+          data: {
+            name: recurringBillResult.name,
+            amount: -Math.abs(recurringBillResult.amount),
+            category: recurringBillResult.category,
+            date: now,
+            avatar: recurringBillResult.avatar,
+            recurringBillId: recurringBillResult.id,
+            userId: session.userId,
+          },
+        });
+      }
+
+      return {
+        ...recurringBillResult,
+        lastPaidDate: alreadyPaid?.date ?? now,
+      };
+    });
+
+    return {
+      data: {
+        recurringBill,
+      },
+    };
+  } catch (error) {
+    console.error(RECURRING_BILLS_ERROR_MESSAGES.PAY_FAILED, error);
+
+    if (error instanceof Error) {
+      return { data: { recurringBill: null }, error: error.message };
+    }
+
+    return {
+      data: {
+        recurringBill: null,
+      },
+      error: RECURRING_BILLS_ERROR_MESSAGES.PAY_FAILED,
     };
   }
 }
