@@ -19,7 +19,7 @@ export async function recurringBillFormAction(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const id = formData.get("name") as string | null;
+  const id = formData.get("id") as string | null || "";
   const name = validateRecurringBillName(formData.get("name"));
   const amount = validateRecurringBillAmount(formData.get("amount"));
   const category = validateRecurringBillCategory(formData.get("category"));
@@ -61,8 +61,9 @@ export async function recurringBillFormAction(
       avatar: null
     });
 
-    if (error)
+    if (error) {
       return fromErrorToActionState(error || RECURRING_BILLS_ERROR_MESSAGES.CREATE_FAILED, formData);
+    }
 
     revalidatePath(recurringBillsPath());
     await setCookieByKey("toast", "Recurring bill created");
