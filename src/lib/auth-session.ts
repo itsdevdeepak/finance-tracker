@@ -31,5 +31,5 @@ export async function verifySession() {
     redirect("/login");
   }
 
-  return session;
+  return { isAuth: session.isAuth, userId: session.userId };
 }

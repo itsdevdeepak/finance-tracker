@@ -40,5 +40,6 @@ export const TRANSACTION_ERROR_MESSAGES = {
   DELETE_FAILED: "Failed to delete transaction. Please try again later.",
   FETCH_BY_ID_FAILED: "Failed to get transaction. Please try again later.",
   FETCH_ALL_FAILED: "Failed to get transactions. Please try again later.",
+  FETCH_SUMMARY_FAILED: "Failed to get Account Summary. Please try again later.",
   UNEXPECTED: "Unexpected error. Please try again later.",
 } as const;

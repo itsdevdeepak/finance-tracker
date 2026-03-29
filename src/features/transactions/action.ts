@@ -83,8 +83,8 @@ export async function transactionFormAction(
       );
     }
 
-    await setCookieByKey("toast", "Transaction created");
     revalidatePath(transactionsPath());
+    await setCookieByKey("toast", "Transaction created");
 
     redirect(transactionsPath());
   }

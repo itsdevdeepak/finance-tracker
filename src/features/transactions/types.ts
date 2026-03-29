@@ -18,8 +18,21 @@ export type Transaction = {
   amount: number;
 };
 
+export type AccountSummary = {
+  current: number;
+  income: number;
+  expense: number;
+};
+
 export type SortingOption = (typeof SortingSelectOptions)[number];
 export type CategoryOption = (typeof CategorySelectOptions)[number];
+
+export type GetAccountSummaryResponse = {
+  data: {
+    accountSummary: AccountSummary;
+  };
+  error?: string;
+};
 
 export type GetTransactionsParams = {
   query?: string;

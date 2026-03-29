@@ -1,6 +1,9 @@
+import 'server-only';
+
 import {
   CreateTransactionResponse,
   DeleteTransactionByIdResponse,
+  GetAccountSummaryResponse,
   GetTransactionByIdResponse,
   GetTransactionsParams,
   GetTransactionsResponse,
@@ -22,6 +25,90 @@ const omitProperties = {
   createdAt: true,
   userId: true
 } as const;
+
+export async function getAccountSummary(): Promise<GetAccountSummaryResponse> {
+  const session = await verifySession();
+  if (!session.isAuth) throw new Error("Unauthorized");
+
+  try {
+    const [balanceRes, incomeRes, expenseRes, totalSavedRes] = await prisma.$transaction([
+      prisma.transaction.aggregate({
+        where: {
+          userId: session.userId
+        },
+        _sum: {
+          amount: true
+        }
+      }),
+      prisma.transaction.aggregate({
+        where: {
+          userId: session.userId,
+          amount: {
+            gte: 1
+          }
+        },
+        _sum: {
+          amount: true
+        }
+      }),
+      prisma.transaction.aggregate({
+        where: {
+          userId: session.userId,
+          amount: {
+            lt: 1
+          }
+        },
+        _sum: {
+          amount: true
+        }
+      }),
+      prisma.pot.aggregate({
+        where: {
+          userId: session.userId,
+        },
+        _sum: {
+          total: true
+        }
+      })
+    ]);
+
+    const balance = balanceRes._sum.amount || 0;
+    const income = incomeRes._sum.amount || 0;
+    const expense = Math.abs(expenseRes._sum.amount || 0);
+    const totalSaved = totalSavedRes._sum.total || 0;
+    const current = balance - totalSaved;
+
+    return {
+      data: {
+        accountSummary: {
+          current,
+          expense,
+          income
+        }
+      }
+
+    };
+  } catch (error) {
+    console.error(TRANSACTION_ERROR_MESSAGES.FETCH_SUMMARY_FAILED, error);
+    const accountSummary = {
+      current: 0,
+      expense: 0,
+      income: 0
+    };
+    if (error instanceof Error) {
+      return {
+        data: {
+          accountSummary,
+        }, error: error.message
+      };
+    }
+    return {
+      data: {
+        accountSummary,
+      }, error: TRANSACTION_ERROR_MESSAGES.FETCH_SUMMARY_FAILED
+    };
+  }
+}
 
 export async function getTransactions({
   query,
