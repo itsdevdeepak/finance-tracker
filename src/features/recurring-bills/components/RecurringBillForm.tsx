@@ -102,6 +102,7 @@ export default function RecurringBillForm({
 					label="Category"
 					defaultValue={defaultValues?.category}
 					options={CategorySelectOptions}
+					className="**:[[role='listbox']]:max-h-60!"
 				/>
 				<SubmitButton label={buttonLabel} />
 			</Form>

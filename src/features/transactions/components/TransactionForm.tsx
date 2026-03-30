@@ -105,6 +105,7 @@ export default function TransactionForm({
 					}))}
 					label="Category"
 					name="category"
+					className="**:[[role='listbox']]:max-h-62.5!"
 				/>
 				<SubmitButton label={buttonLabel} />
 			</Form>
