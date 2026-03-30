@@ -33,8 +33,13 @@
 
 		@media (width >= 700px) {
 			&::after {
+				content: "";
+				background: currentColor;
 				margin-inline-start: auto;
-				content: url("/images/icon-caret-down.svg");
+				width: 12px;
+				height: 6px;
+				mask-image: url("/images/icon-caret-down.svg");
+				mask-repeat: no-repeat;
 				display: inherit;
 			}
 

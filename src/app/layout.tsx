@@ -26,6 +26,14 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" className={publicSans.variable}>
+			<head>
+				<link
+					rel="preload"
+					href="/images/icon-caret-down.svg"
+					as="image"
+					type="image/svg+xml"
+				/>
+			</head>
 			<body>
 				<ToastProvider>
 					<>

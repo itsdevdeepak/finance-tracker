@@ -46,6 +46,7 @@ export default function RecurringTable({
 										alt=""
 										width={40}
 										height={40}
+										loading="eager"
 									/>
 									{recurring.name}
 								</div>

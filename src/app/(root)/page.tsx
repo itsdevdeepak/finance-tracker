@@ -16,7 +16,7 @@ export default function Home() {
 			<Suspense fallback={<BalanceCardsSkeletal />}>
 				<BalanceCards getBalancePromise={getBalancePromise} />
 			</Suspense>
-			<div className="flex max-lg:flex-col gap-2xl">
+			<div className="flex max-lg:flex-col gap-2xl mb-auto">
 				<div className="grow flow-2xl">
 					<Suspense fallback={<SummarySkeletal height="100px" />}>
 						<PotsSummary />

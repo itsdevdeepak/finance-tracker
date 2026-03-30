@@ -26,6 +26,7 @@ function RecurringItem({
 					alt=""
 					width={32}
 					height={32}
+					loading="eager"
 				/>
 				<div className="flow-2xs">
 					<p className="font-bold">{recurringBill.name}</p>

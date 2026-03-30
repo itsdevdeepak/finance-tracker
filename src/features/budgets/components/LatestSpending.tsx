@@ -29,13 +29,11 @@ export async function LatestSpending({ category }: { category: string }) {
 						<li key={transaction.id}>
 							<div className="flex items-center gap-base text-xs">
 								<Image
-									src={
-										transaction.avatar ||
-										"/images/avatars/savory-bites-bistro.jpg"
-									}
+									src={transaction.avatar}
 									width={32}
 									height={32}
 									alt=""
+									loading="eager"
 								/>
 								<span className="font-bold">{transaction.name}</span>
 								<div className="ml-auto flex flex-col gap-2xs">

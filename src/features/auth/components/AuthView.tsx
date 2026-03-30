@@ -27,6 +27,7 @@ export function SideBanner({ className }: { className?: string }) {
 					aria-hidden="true"
 					width={560}
 					height={920}
+					preload={true}
 				/>
 				<div className="col-start-1 row-start-1 flex h-full w-full flex-col p-lg text-white">
 					<IconLogoLarge aria-hidden="true" />

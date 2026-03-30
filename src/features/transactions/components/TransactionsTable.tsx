@@ -38,6 +38,7 @@ export default function TransactionTable({
 										alt=""
 										width={40}
 										height={40}
+										loading="eager"
 									/>
 									{transaction.name}
 								</div>
