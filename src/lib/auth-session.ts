@@ -1,8 +1,7 @@
-import "server-only";
-
 import { redirect } from "next/navigation";
 import { auth } from "./auth";
 import { headers } from "next/headers";
+import { connection } from "next/server";
 
 export type SessionState = {
   isAuth: boolean;
@@ -10,6 +9,7 @@ export type SessionState = {
 };
 
 export async function getSessionState(): Promise<SessionState> {
+  await connection();
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
